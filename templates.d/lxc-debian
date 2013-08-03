@@ -8,6 +8,8 @@
 # debootstrap debian install
 #
 
+LAN_INTERFACE='eth0'
+
 download_debian() 
 {
     
@@ -29,7 +31,7 @@ download_debian()
     fi
 
     mv "$CACHE/$SUITE/partial-$ARCH" "$CACHE/$SUITE/rootfs-$ARCH"
-    info "\nDownload Debian complete.\n"
+    info "\nDownload $DIST $SUITE complete.\n"
 
     return 0
 }
@@ -70,6 +72,130 @@ install_debian()
     return $?
 }
 
+debian_network()
+{
+	# setting up hostname
+	HOSTNAME=$NAME.$DOMAIN
+	if [ "$DHCP" = "y" ]; then
+cat <<EOF >> $ROOTFS/etc/network/interfaces
+# interface $LAN_INTERFACE
+auto $LAN_INTERFACE
+iface $LAN_INTERFACE inet dhcp
+EOF
+	else
+cat <<EOF >> $ROOTFS/etc/network/interfaces
+# interface $LAN_INTERFACE
+auto $LAN_INTERFACE
+iface $LAN_INTERFACE inet static
+	address $IP
+	netmask $NETMASK
+	network $NETWORK
+	gateway $GATEWAY
+EOF
+cat <<EOF > $ROOTFS/etc/hosts
+# $HOSTNAME
+$IP	$HOSTNAME $NAME
+EOF
+	fi
+# set the hostname
+echo $NAME > ${prefix}/etc/hostname
+echo $HOSTNAME > ${prefix}/etc/mailname
+
+}
+
+configure_debian()
+{
+	# configure inittab
+	debian_inittab
+	# configure via mknod devices
+	debian_devices
+	# configure fstab
+	debian_fstab
+	# configure debian network
+	debian_network
+	# running basic debian hooks
+	DEBIAN="$TEMPLATEDIR/debian.d"
+	for f in $(find $DEBIAN/* -maxdepth 1 -type f | sort --numeric-sort); do
+		. $f
+	done
+}
+
+debian_devices()
+{
+	DEV="$ROOTFS/dev"
+    for tty in $(seq 1 4); do
+	if [ ! -e $DEV/tty$tty ]; then
+	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
+	fi
+    done
+    # Mount pseudo-filesystems
+    mount -o bind /dev/pts "$ROOTFS/dev/pts"
+    mount -o bind /proc "$ROOTFS/proc"
+    mount -o bind /sys "$ROOTFS/sys"
+	# Bind mount systems apt cache
+    mount -o bind /var/cache/apt/archives "$ROOTFS/var/cache/apt/archives"	
+}
+
+# Write out a custom fstab
+debian_fstab() {
+cat <<EOF > $ROOTFS/etc/fstab
+# /etc/fstab: static file system information.
+#
+# Use 'blkid' to print the universally unique identifier for a
+# device; this may be used with UUID= as a more robust way to name devices
+# that works even if disks are added and removed. See fstab(5).
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+tmpfs /tmp tmpfs nosuid,noexec,nodev,rw 0 0
+tmpfs /dev/shm tmpfs nosuid,noexec,nodev,rw 0 0
+EOF
+}
+
+debian_inittab() {
+cat <<EOF > $ROOTFS/etc/inittab
+id:3:initdefault:
+si::sysinit:/etc/init.d/rcS
+l0:0:wait:/etc/init.d/rc 0
+l1:1:wait:/etc/init.d/rc 1
+l2:2:wait:/etc/init.d/rc 2
+l3:3:wait:/etc/init.d/rc 3
+l4:4:wait:/etc/init.d/rc 4
+l5:5:wait:/etc/init.d/rc 5
+l6:6:wait:/etc/init.d/rc 6
+# Normally not reached, but fallthrough in case of emergency.
+z6:6:respawn:/sbin/sulogin
+1:2345:respawn:/sbin/getty 38400 console
+c1:12345:respawn:/sbin/getty 38400 tty1 linux
+c2:12345:respawn:/sbin/getty 38400 tty2 linux
+c3:12345:respawn:/sbin/getty 38400 tty3 linux
+c4:12345:respawn:/sbin/getty 38400 tty4 linux
+EOF
+}
+
+debian_cleanup()
+{
+	#
+	# clean apt cache
+	#
+	chroot $ROOTFS /usr/bin/apt-get -y autoremove
+	chroot $ROOTFS /usr/bin/apt-get -y clean
+	# protect dash and locales
+	chroot $ROOTFS /bin/echo locales hold | /usr/bin/dpkg --set-selections
+	chroot $ROOTFS /bin/echo dash hold | /usr/bin/dpkg --set-selections
+	#  Remove disable-daemons script (if present)
+	if [ -x "$ROOTFS/usr/sbin/policy-rc.d" ]; then
+		rm -f "$ROOTFS/usr/sbin/policy-rc.d"
+	fi
+	# Unmount systems apt cache
+    umount "$ROOTFS/var/cache/apt/archives"
+    rm -f "$ROOTFS/etc/dpkg/dpkg.cfg.d/lxc"
+    # Unmount pseudo-filesystems
+    umount "$ROOTFS/dev/pts"
+    umount "$ROOTFS/proc"
+    umount "$ROOTFS/sys"
+}
+
 
 create_container()
 {
@@ -77,9 +203,9 @@ create_container()
 	# create cache and install Debian
 	install_debian
 	# configure chroot
-	# running hooks
-	# configure debian services
+	configure_debian
 	# cleanup debian
+	debian_cleanup
 	info "\nDebian LXC Container created\n"
 	return 0
 }

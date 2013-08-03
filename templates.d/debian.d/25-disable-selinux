@@ -1,0 +1,8 @@
+#!/bin/sh
+# 25-disable-selinux
+#
+# Disable selinux in the container
+#
+
+mkdir -p $ROOTFS/selinux
+echo 0 > $ROOTFS/selinux/enforce

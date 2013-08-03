@@ -1,0 +1,62 @@
+#!/bin/sh
+# 70-configure-ssh
+#
+# install and configure SSH
+#
+
+#  Create an ssh directory
+#
+mkdir -p $ROOTFS/etc/ssh
+
+#
+# Generate the Host RSA Key
+#
+if [ ! -f $ROOTFS/etc/ssh/ssh_host_rsa_key ]; then
+	if ssh-keygen -t rsa -N "" -f $ROOTFS/etc/ssh/ssh_host_rsa_key -C "root@$NAME"; then
+		message "successfully generated Host RSA"
+	else
+		message "failed to generate Host RSA Key"
+	fi
+fi
+
+#
+# Generate the Host DSA Key
+#
+if [ ! -f $ROOTFS/etc/ssh/ssh_host_dsa_key ]; then
+	if ssh-keygen -t dsa -N "" -f $ROOTFS/etc/ssh/ssh_host_dsa_key -C "root@$NAME"; then
+		message "successfully generetaged Host DSA"
+	else
+		message "failed to generate Host DSA Key"
+	fi
+fi
+
+#
+# Install openssh-server
+#
+install_package openssh-server
+
+#
+# configure ssh config file
+#
+cat <<EOF > $ROOTFS/etc/ssh/sshd_config
+Port 22
+Protocol 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+UsePrivilegeSeparation yes
+KeyRegenerationInterval 3600
+ServerKeyBits 768
+SyslogFacility AUTH
+LogLevel INFO
+LoginGraceTime 120
+PermitRootLogin yes
+StrictModes yes
+RSAAuthentication yes
+PubkeyAuthentication yes
+IgnoreRhosts yes
+RhostsRSAAuthentication no
+HostbasedAuthentication no
+PermitEmptyPasswords yes
+ChallengeResponseAuthentication no
+UsePAM yes
+EOF

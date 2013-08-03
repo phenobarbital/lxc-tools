@@ -11,11 +11,11 @@ prefix=$1
 #
 # Log our start
 #
-message "role $0 starting"
+message "role stub starting"
 
 info "\n Running role in ${prefix} \n"
 
 #
 #  Log our finish
 #
-message "role $0 finished"
+message "role stub finished"

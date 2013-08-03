@@ -193,7 +193,7 @@ function install_package()
 		#
 		# Install the packages
 		#
-		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --yes --force-yes install "$@"
+		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
 	fi
 	# TODO: other distro versions
 }

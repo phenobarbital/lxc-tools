@@ -53,3 +53,24 @@ esac
 
 exit 0
 
+Como en lxc normal, agregar una shared data
+
+        if [ -z "${_ENTRY}" ]
+        then
+                # Adding shared data directory if existing
+                if [ -d "/srv/share/${_NAME}" ]
+                then
+                        echo "lxc.mount.entry                         = /srv/share/${_NAME} ${_ROOTFS}/srv/${_NAME} none defaults,bind 0 0" >> "${_PATH}/config"
+                        mkdir -p "${_ROOTFS}/srv/${_NAME}"
+                elif [ -d "/srv/${_NAME}" ]
+                then
+                        echo "lxc.mount.entry                         = /srv/${_NAME} ${_ROOTFS}/srv/${_NAME} none defaults,bind 0 0" >> "${_PATH}/config"
+                        mkdir -p "${_ROOTFS}/srv/${_NAME}"
+                elif [ -d "/srv/share" ]
+                then
+                        echo "#lxc.mount.entry                        = /srv/share/${_NAME} ${_ROOTFS}/srv/${_NAME} none defaults,bind 0 0" >> "${_PATH}/config"
+                else
+                        echo "#lxc.mount.entry                        = /srv/${_NAME} ${_ROOTFS}/srv/${_NAME} none defaults,bind 0 0" >> "${_PATH}/config"
+                fi
+        fi
+

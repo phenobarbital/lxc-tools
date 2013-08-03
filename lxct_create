@@ -50,6 +50,7 @@ VLAN_ID='1234'
 DIST=''
 TEMPLATE=''
 ROLE=''
+HOSTNAME=''
 
 usage() {
     echo "Usage: $(basename $0) {create|test} [-n NAME] [-t TEMPLATE] [-r ROLE]"
