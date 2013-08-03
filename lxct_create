@@ -1,0 +1,33 @@
+#!/bin/bash
+# ================================================================================
+# LXC-tools: Appliance and LXC container builder for Debian GNU/Linux (and derivatives)
+#
+# Copyright © 2010 Jesús Lara Giménez (phenobarbital) <jesuslara@devel.com.ve>>
+# Version: 0.2    
+#
+#    Developed by Jesus Lara (phenobarbital) <jesuslara@phenobarbital.info>
+#    https://github.com/phenobarbital/mandarinalinux
+#    
+#    This script is based on the lxc-debian example script that ships with lxc.
+#    Copyright (C) 2010 Nigel McNie
+#
+#    License: GNU GPL version 3  <http://gnu.org/licenses/gpl.html>.
+#    This is free software: you are free to change and redistribute it.
+#    There is NO WARRANTY, to the extent permitted by law.
+# ================================================================================
+
+###
+# lxct_create
+# create a lxc container
+##
+
+set -e
+
+# get configuration
+if [ -e /etc/lxc-tools/lxc-tools.conf ]; then
+    . /etc/lxc-tools/lxc-tools.conf
+else
+    . ./share/lxc-tools.conf
+fi
+
+

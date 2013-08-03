@@ -14,8 +14,14 @@ Es un "chroot" mejorado puesto que las facilidades de administraci√≥n y ejecuci√
 LXC-Debian es un script que permite crear contenedores personalizados de GNU/Linux Debian dentro de un
 contenedor LXC.
 
+* Requerimientos
+
+- lxc
+- debootstrap
+- lsb-release
+
 Authors:
- Jesus Lara <jesuslara@devel.com.ve>
+ Jesus Lara <jesuslarag@gmail.com>
  version: 0.1
  Copyright (C) 2010 Jesus Lara
 

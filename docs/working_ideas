@@ -1,0 +1,55 @@
+- descubrir en /etc/default/lxc
+
+LXC_AUTO="true"
+LXC_DIRECTORY="/var/lib/lxc"
+
+/etc/lxc/lxc.conf
+contiene:
+lxcpath=/var/lib/lxc
+
+- crear cada comando:
+
+lxc:
+- create
+- update
+- delete
+- import (from vps openvz)
+- export (to gz file)
+
+lxct 
+
+- create a console-like command (lxct) como lxctl pero en Python
+
+
+### main execution program
+
+COMMAND=$1
+
+shift
+case "$COMMAND" in
+    help)      echo "help"; usage && exit 0;;
+    bridge)
+		get_bridge;;
+    ip)
+    	# ip info
+    	IFACE=$1; get_ip;;
+    netmask)
+    	# ip info
+    	IFACE=$1; get_netmask;;
+    network)
+    	# ip info
+    	IFACE=$1; get_network;;
+    broadcast)
+    	# ip info
+    	IFACE=$1; get_broadcast;;
+    subnet)
+    	# ip info
+    	IFACE=$1; get_subnet;;
+    *)
+    	usage
+        exit 1
+        ;;
+esac
+
+exit 0
+
