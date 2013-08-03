@@ -23,11 +23,25 @@
 
 set -e
 
+if [ "$(id -u)" != "0" ]; then
+   echo "$(basename $0): must be run as root" >&2
+   exit 1
+fi
+
 # get configuration
 if [ -e /etc/lxc-tools/lxc-tools.conf ]; then
     . /etc/lxc-tools/lxc-tools.conf
 else
     . ./share/lxc-tools.conf
+fi
+
+#
+#  fill all "auto" variables
+#
+if [ -e /usr/lib/lxc-tools/build.sh ]; then
+    . /usr/lib/lxc-tools/build.sh
+else
+    . ./lib/build.sh
 fi
 
 # get general info about LXC
@@ -46,10 +60,15 @@ cat << _MSG
  * Gateway : ....................... $GATEWAY
  * Netmask : ....................... $NETMASK
  * Network : ....................... $NETWORK
- * Install Mode : .................. $FS_METHOD
- * Interface Name : ................ $IFACE
+ * Install Mode : .................. $BACKEND_METHOD
+ * Network Mode : .................. $NET_TYPE
  *
  ************************************************************************
  
+ ********************* [ LXC check configuration ] ********************** 
+ 
+ $(lxc-checkconfig)
+ 
+ ************************************************************************ 
 _MSG
 

@@ -30,10 +30,25 @@ else
     . ./share/lxc-tools.conf
 fi
 
+#
+#  fill all "auto" variables
+#
+if [ -e /usr/lib/lxc-tools/build.sh ]; then
+    . /usr/lib/lxc-tools/build.sh
+else
+    . ./lib/build.sh
+fi
+
 ####================= Main execution ==========================####
 
+SIZE=''
+IP=''
+IFACE=''
+NET_OPTIONS=''
+VLAN_ID='1234'
+
 usage() {
-    echo "Usage: $(basename $(readlink -f $0)) {create|test} [-n NAME] [-t TEMPLATE] [-r ROLE]"
+    echo "Usage: $(basename $0) {create|test} [-n NAME] [-t TEMPLATE] [-r ROLE]"
     exit 0
 }
 
@@ -48,12 +63,295 @@ the informations submitted interactively with 'lxct-create create'
   -n, --name                 container hostname
   -t, --template             template name (debian, ubuntu, canaima, etc)
   -r, --role                 role-based template name
+  -s, --size                 if lvm or btrfs, volume size
+  -i, --iface                if macvlan or vlan option, interface name (ex: eth0)
+  -v, --vlan                 if vlan is enabled, define vlan-id
       --help     muestra esta ayuda y finaliza
       --version  informa de la versión y finaliza
 EOF
 }
 
-### main execution program
+# get hostname
+function get_name() {
+        if [ -z "$NAME" ]; then
+                echo -n "name of container? [`hostname --short`] "
+                read _HOSTNAME_
+                if [ ! -z "$_HOSTNAME_" ]; then
+                    NAME=$_HOSTNAME_
+                elif [ -z "$NAME" ]; then
+                    echo "$(basename $0) error : missing container name, use -n option"
+                    exit 1
+                fi
+        fi
+}
+
+function get_size() {
+	if [ -z "$SIZE" ]; then
+		SIZE=$DEFAULT_SIZE
+	fi
+}
+
+# get network information
+function get_network_info() {
+	#TODO define vlan, nat or bridge network
+	if [ "$DHCP" = 'n' ]; then
+		#use static ip
+		if [ -z "$IP" ]; then
+			echo -n "IP Address for container [ex: 192.168.1.x]: "
+			read _IP_
+			if [ ! -z "$_IP_" ]; then
+				IP=$_IP_
+			else
+				echo "$(basename $0) error: missing IP Address"
+				exit 1
+			fi
+		fi
+        # TODO: validate IP address
+        
+        # use fixed IP
+        NET="$IP/$SUBNET"
+    else
+		# use DHCP
+		NET="0.0.0.0/$SUBNET"
+	fi
+    # get mac-address
+	if [ -f /usr/lib/lxc-tools/macgen.py ]; then
+		MACADDR=`python /usr/lib/lxc-tools/macgen.py`
+	else
+		MACADDR=`python ./lib/macgen.py`
+	fi
+	# get network type
+	case "$NET_TYPE" in
+	'veth')
+NET_OPTIONS=$(cat <<EOF
+lxc.network.link                        = $BRIDGE
+lxc.network.hwaddr                      = $MACADDR
+lxc.network.ipv4                        = $NET
+EOF
+)
+;;
+	'macvlan')
+NET_OPTIONS=$(cat <<EOF
+lxc.network.link                        = $IFACE
+lxc.network.hwaddr                      = $MACADDR
+lxc.network.ipv4                        = $NET
+EOF
+)
+;;
+	'vlan')
+NET_OPTIONS=$(cat <<EOF
+lxc.network.link                        = $IFACE
+lxc.network.vlan.id                     = $VLAN_ID
+lxc.network.hwaddr                      = $MACADDR
+lxc.network.ipv4                        = $NET
+EOF
+)
+;;
+	'empty')
+		NET_OPTIONS='';;
+	'*')
+		echo "$(basename $0) invalid network configuration" >&2;
+		exit 1;;
+	esac
+}
+
+# get volume and create lvm volume
+function create_lvm_volume() {
+	if [ "$FS_METHOD" = 'btrfs' ]; then
+		get_size
+cat <<EOF
+  Volume Group: $LVM
+  LVM Name : $NAME
+  Size : $SIZE
+EOF
+		LVCREATE=`which lvcreate`
+		if [ ! -f "$LVCREATE" ]; then
+			echo "'lvcreate' command is missing, run 'apt-get install lvm2'"
+			exit 1
+		fi
+		LVROOTFS="/dev/$LVM/$NAME"
+		lvdisplay $LVROOTFS > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			echo "$(basename $0) error: $LVROOTFS already exists in vggroup $LVM" >&2
+			exit 1
+		fi
+		$LVCREATE -n $NAME --size $SIZE $LVM
+		if [ $? -eq 0 ]; then
+			echo "$(basename $0) error creating $LVROOTFS in vggroup $LVM, aborted" >&2
+			exit 1
+		fi
+		# volume format
+		if [ -f "$LVROOTFS" ]; then
+			/sbin/mkfs.$FS -L $NAME $LVROOTFS
+		else
+			echo "$(basename $0) error: $LVROOTFS not created"
+			exit 1
+		fi
+		# mount
+		mount -t $FS $LVROOTFS $ROOTFS
+  fi
+}
+
+function create_btrfs_volume() {
+	#TODO
+	if [ "$FS_METHOD" = 'btrfs' ]; then
+		get_size
+		echo "formatting via btrfs"
+	fi
+}
+
+# crear la carpeta para el rootfs
+function make_rootfs() {
+	# create directory
+    if [ ! -f "$ROOTFS" ]; then
+		mkdir -p $ROOTFS
+		echo "- created rootfs folder $ROOTFS -"
+    fi
+}
+
+function touch_config() {
+	if [ -d "$CONFIG" ]; then
+		echo "- created config file in $CONFIG -"
+		touch $CONFIGFILE
+	fi
+}
+
+function create_lxc_config() {
+cat <<EOF > $CONFIGFILE
+# $CONFIGFILE
+
+## Container
+lxc.utsname                             = $NAME
+lxc.rootfs                              = $ROOTFS
+lxc.arch                                = $ARCH
+lxc.console                             = /var/log/lxc/$NAME.console
+lxc.tty                                 = 4
+lxc.pts                                 = 1024
+
+## network
+lxc.network.type                        = $NET_TYPE
+lxc.network.flags                       = up
+$NET_OPTIONS
+
+## Capabilities
+lxc.cap.drop                            = mac_admin
+lxc.cap.drop                            = mac_override
+lxc.cap.drop                            = sys_admin
+lxc.cap.drop                            = sys_module
+
+## Devices
+# Allow all devices
+#lxc.cgroup.devices.allow               = a
+# Deny all devices
+lxc.cgroup.devices.deny                 = a
+# Allow to mknod all devices (but not using them)
+lxc.cgroup.devices.allow                = c *:* m
+lxc.cgroup.devices.allow                = b *:* m
+# /dev/console
+lxc.cgroup.devices.allow                = c 5:1 rwm
+# /dev/fuse
+lxc.cgroup.devices.allow                = c 10:229 rwm
+# /dev/null
+lxc.cgroup.devices.allow                = c 1:3 rwm
+# /dev/ptmx
+lxc.cgroup.devices.allow                = c 5:2 rwm
+# /dev/pts/*
+lxc.cgroup.devices.allow                = c 136:* rwm
+# /dev/random
+lxc.cgroup.devices.allow                = c 1:8 rwm
+# /dev/rtc
+lxc.cgroup.devices.allow                = c 254:0 rwm
+# /dev/tty
+lxc.cgroup.devices.allow                = c 5:0 rwm
+# /dev/urandom
+lxc.cgroup.devices.allow                = c 1:9 rwm
+# /dev/zero
+lxc.cgroup.devices.allow                = c 1:5 rwm
+
+## Limits
+lxc.cgroup.cpu.shares                  = 1024
+lxc.cgroup.cpuset.cpus                 = 1
+lxc.cgroup.memory.limit_in_bytes       = $MEMORY
+lxc.cgroup.memory.memsw.limit_in_bytes = 256M
+
+## Filesystem
+lxc.mount.entry                         = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
+lxc.mount.entry                         = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
+lxc.mount.entry                         = devpts $ROOTFS/dev/pts devpts defaults 0 0
+EOF
+    if [ $? -ne 0 ]; then
+        echo "$(basename $0) Failed to add configuration"
+        return 1
+    fi
+
+    return 0
+}	
+
+
+### primary functions
+function create() {
+	CONFIG="$DIR/$NAME"
+    ROOTFS="$CONFIG/rootfs"
+    CONFIGFILE="$CONFIG/config"
+    if [ -z "$BACKEND_METHOD" ]; then
+		# if not backend_method defined, dir is by default
+		BACKEND_METHOD='dir'
+	fi
+	# check filesystem
+    grep -q "\<$FS\>" /proc/filesystems
+    if [ $? -ne 0 ]; then
+        echo "$(basename $0) error: $FS is not listed in /proc/filesystems" >&2
+        exit 1
+    fi
+    make_rootfs
+	case "$BACKEND_METHOD" in
+	"btrfs")
+		#TODO: no options yet
+		create_btrfs_volume
+		touch_config
+		echo "btrfs" && exit 0;;
+	"dir")
+		# create config-file
+		touch_config
+		;;
+	"lvm")
+		# mount LVM volume
+		create_lvm_volume
+		touch_config
+		;;
+	"*")
+		# invalid option
+		echo "$(basename $0) : invalid method $BACKEND_METHOD" >&2
+		exit 1;;
+	esac
+	# network configuration
+	get_network_info
+	# create config file
+    create_lxc_config
+
+    ## creating vm from template
+    # create_$CREATE
+    #if [ "$?" -ne "0" ]; then
+    #	echo "Ha fallado la creacion de la VM, alto"
+    #	exit 1
+    #fi
+    #
+    
+    # add this container to lxc
+	#if [ -f "$CONFIGFILE" ] ; then
+  	#	#si existe el archivo, entonces
+  	#	$LXC_CREATE -n $NAME -f $CONFIGFILE
+	#fi
+    echo "Done."
+    echo -e "\nYou can run your container with the 'lxc-start -n $NAME'\n"    
+}
+
+### main execution program ###
+
+if [ "$(id -u)" != "0" ]; then
+   echo "$(basename $0): must be run as root" >&2
+   exit 1
+fi
 
 # si no pasamos ningun parametro
 if [ $# = 0 ]; then
@@ -64,15 +362,24 @@ fi
 COMMAND=$1
 
 shift
-while getopts "n:d:h" flag ; do
+while getopts "n:d:i:v:h" flag ; do
     case "$flag" in
     	h)  help && exit 0;;
+    	i)
+			# interface name
+			IFACE="$OPTARG";;
+		v)
+			# vlan id
+			VLAN_ID="$OPTARG";;
         t)  # template
         	TEMPLATE="$OPTARG";;
         n)  # name
         	NAME="$OPTARG";;
         r)  # role-name
         	ROLE="$OPTARG";;
+        s)
+			# size
+			SIZE="$OPTARG";;
         *)     usage && exit 1;;
     esac
 done
@@ -80,10 +387,10 @@ done
 case "$COMMAND" in
     "create")
     	# container creation
-    	configure; create;;
+    	create;;
     "test")
     	# container test
-    	lxct_test;;
+    	check;;
     "-h")
 		help && exit 0;;
     "--help")

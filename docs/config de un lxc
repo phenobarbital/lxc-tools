@@ -54,7 +54,7 @@ lxc.cgroup.devices.allow                = c 1:5 rwm
 lxc.cgroup.cpu.shares                  = 1024
 lxc.cgroup.cpuset.cpus                 = 1
 lxc.cgroup.memory.limit_in_bytes       = 1024M
-# lxc.cgroup.memory.memsw.limit_in_bytes = 1G
+lxc.cgroup.memory.memsw.limit_in_bytes = 256M
 
 ## Filesystem
 lxc.mount.entry                         = proc /srv/lxc/services/rootfs/proc proc nodev,noexec,nosuid 0 0

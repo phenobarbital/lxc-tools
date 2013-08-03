@@ -17,6 +17,8 @@ fi
 
 if [ "$DIR" = "auto" ]; then
 	DIR=`get_lxcpath`
+elif [ -z "$DIR" ]; then
+	DIR=`get_lxcpath`
 fi
 
 if [ "$LVM" = "auto" ]; then
@@ -46,4 +48,5 @@ BRIDGE=`get_default_bridge`
 GATEWAY=$(get_ip $BRIDGE)
 NETMASK=$(get_netmask $BRIDGE)
 NETWORK=$(get_network $GATEWAY $NETMASK)
+SUBNET=$(get_subnet $BRIDGE)
 
