@@ -6,6 +6,12 @@
 #
 ##
 
+VERSION='0.2'
+
+function get_version() {
+	echo "LXC-tools version $VERSION";
+}
+
 function get_lxcpath() {
 	if [ -e /etc/lxc/lxc.conf ]; then
 		# using config dir from lxc
