@@ -41,11 +41,15 @@ fi
 
 ####================= Main execution ==========================####
 
+NAME=''
 SIZE=''
 IP=''
 IFACE=''
 NET_OPTIONS=''
 VLAN_ID='1234'
+DIST=''
+TEMPLATE=''
+ROLE=''
 
 usage() {
     echo "Usage: $(basename $0) {create|test} [-n NAME] [-t TEMPLATE] [-r ROLE]"
@@ -71,6 +75,49 @@ the informations submitted interactively with 'lxct-create create'
 EOF
 }
 
+# get template
+function get_template() 
+{
+	templatedir
+	if [ -z "$TEMPLATE" ]; then
+		DIST=`get_distribution`
+		case "$DIST" in
+			"debian"|"Debian"|"DEBIAN")
+				message "using lxc-debian as template"
+				TEMPLATE="$TEMPLATEDIR/lxc-debian"
+				;;
+			*)
+				error "Unknown distribution: $DIST"
+				exit 1
+				;;    	
+		esac
+	elif [ -f "$TEMPLATEDIR/lxc-$TEMPLATE"]; then
+		TEMPLATE="$TEMPLATEDIR/lxc-$TEMPLATE"
+	else
+		error "$(basename $0) template $TEMPLATE not exists, aborted"
+		exit 1
+	fi
+}
+
+function get_role()
+{
+	roledir
+	if [ ! -z "$ROLE" ]; then
+		#verifico que el rol existe
+		if [ -f "$ROLEDIR/$ROLE" ]; then
+			# verifico ademas la permisologia
+			if [ ! -x "$ROLEDIR/$ROLE" ]; then
+				error "$(basename $0) role $ROLE is not executable, try chmod o+x $ROLEDIR/ROLE"
+			else
+				return 0
+			fi
+		else
+			error "$(basename $0) role $ROLE not exists in $ROLEDIR"
+			return 1
+		fi
+	fi
+}
+
 # get hostname
 function get_name() {
         if [ -z "$NAME" ]; then
@@ -79,7 +126,7 @@ function get_name() {
                 if [ ! -z "$_HOSTNAME_" ]; then
                     NAME=$_HOSTNAME_
                 elif [ -z "$NAME" ]; then
-                    echo "$(basename $0) error : missing container name, use -n option"
+                    error "$(basename $0) error : missing container name, use -n option"
                     exit 1
                 fi
         fi
@@ -102,7 +149,7 @@ function get_network_info() {
 			if [ ! -z "$_IP_" ]; then
 				IP=$_IP_
 			else
-				echo "$(basename $0) error: missing IP Address"
+				error "$(basename $0) error: missing IP Address"
 				exit 1
 			fi
 		fi
@@ -150,7 +197,7 @@ EOF
 	'empty')
 		NET_OPTIONS='';;
 	'*')
-		echo "$(basename $0) invalid network configuration" >&2;
+		error "$(basename $0) invalid network configuration"
 		exit 1;;
 	esac
 }
@@ -166,25 +213,25 @@ cat <<EOF
 EOF
 		LVCREATE=`which lvcreate`
 		if [ ! -f "$LVCREATE" ]; then
-			echo "'lvcreate' command is missing, run 'apt-get install lvm2'"
+			error "'lvcreate' command is missing, run 'apt-get install lvm2'"
 			exit 1
 		fi
 		LVROOTFS="/dev/$LVM/$NAME"
 		lvdisplay $LVROOTFS > /dev/null 2>&1
 		if [ $? -eq 0 ]; then
-			echo "$(basename $0) error: $LVROOTFS already exists in vggroup $LVM" >&2
+			error "$(basename $0) error: $LVROOTFS already exists in vggroup $LVM" >&2
 			exit 1
 		fi
 		$LVCREATE -n $NAME --size $SIZE $LVM
 		if [ $? -eq 0 ]; then
-			echo "$(basename $0) error creating $LVROOTFS in vggroup $LVM, aborted" >&2
+			error "$(basename $0) error creating $LVROOTFS in vggroup $LVM, aborted" >&2
 			exit 1
 		fi
 		# volume format
 		if [ -f "$LVROOTFS" ]; then
 			/sbin/mkfs.$FS -L $NAME $LVROOTFS
 		else
-			echo "$(basename $0) error: $LVROOTFS not created"
+			error "$(basename $0) error: $LVROOTFS not created"
 			exit 1
 		fi
 		# mount
@@ -196,7 +243,7 @@ function create_btrfs_volume() {
 	#TODO
 	if [ "$FS_METHOD" = 'btrfs' ]; then
 		get_size
-		echo "formatting via btrfs"
+		message "formatting via btrfs"
 	fi
 }
 
@@ -205,13 +252,13 @@ function make_rootfs() {
 	# create directory
     if [ ! -f "$ROOTFS" ]; then
 		mkdir -p $ROOTFS
-		echo "- created rootfs folder $ROOTFS -"
+		message "- created rootfs folder $ROOTFS -"
     fi
 }
 
 function touch_config() {
 	if [ -d "$CONFIG" ]; then
-		echo "- created config file in $CONFIG -"
+		message "- created config file in $CONFIG -"
 		touch $CONFIGFILE
 	fi
 }
@@ -280,7 +327,7 @@ lxc.mount.entry                         = sysfs $ROOTFS/sys sysfs defaults,ro 0 
 lxc.mount.entry                         = devpts $ROOTFS/dev/pts devpts defaults 0 0
 EOF
     if [ $? -ne 0 ]; then
-        echo "$(basename $0) Failed to add configuration"
+        error "$(basename $0) Failed to add configuration"
         return 1
     fi
 
@@ -290,6 +337,7 @@ EOF
 
 ### primary functions
 function create() {
+	get_name
 	CONFIG="$DIR/$NAME"
     ROOTFS="$CONFIG/rootfs"
     CONFIGFILE="$CONFIG/config"
@@ -300,7 +348,7 @@ function create() {
 	# check filesystem
     grep -q "\<$FS\>" /proc/filesystems
     if [ $? -ne 0 ]; then
-        echo "$(basename $0) error: $FS is not listed in /proc/filesystems" >&2
+        error "$(basename $0) error: $FS is not listed in /proc/filesystems" >&2
         exit 1
     fi
     make_rootfs
@@ -321,35 +369,44 @@ function create() {
 		;;
 	"*")
 		# invalid option
-		echo "$(basename $0) : invalid method $BACKEND_METHOD" >&2
+		error "$(basename $0) : invalid method $BACKEND_METHOD" >&2
 		exit 1;;
 	esac
 	# network configuration
 	get_network_info
 	# create config file
     create_lxc_config
-
     ## creating vm from template
-    # create_$CREATE
-    #if [ "$?" -ne "0" ]; then
-    #	echo "Ha fallado la creacion de la VM, alto"
-    #	exit 1
-    #fi
+    get_template
+    message "creating container from template $TEMPLATE"
+    . $TEMPLATE
+    create_container
+    if [ "$?" -ne "0" ]; then
+    	error "failed to create Container, aborted"
+    	exit 1
+    fi
     #
-    
     # add this container to lxc
 	#if [ -f "$CONFIGFILE" ] ; then
   	#	#si existe el archivo, entonces
   	#	$LXC_CREATE -n $NAME -f $CONFIGFILE
 	#fi
-    echo "Done."
-    echo -e "\nYou can run your container with the 'lxc-start -n $NAME'\n"    
+	# running any role defined into chroot
+	get_role
+    if [ "$?" -ne "0" ]; then
+    	error "failed to get role $ROLE information"
+    else
+		info "\n = Executing role $ROLE = \n"
+		. $ROLEDIR/$ROLE $ROOTFS
+    fi
+    message "Done."
+    info "\nYou can run your container with the 'lxc-start -n $NAME'\n"    
 }
 
 ### main execution program ###
 
 if [ "$(id -u)" != "0" ]; then
-   echo "$(basename $0): must be run as root" >&2
+   error "$(basename $0): must be run as root" >&2
    exit 1
 fi
 
@@ -362,7 +419,7 @@ fi
 COMMAND=$1
 
 shift
-while getopts "n:d:i:v:h" flag ; do
+while getopts "n:d:i:r:v:h" flag ; do
     case "$flag" in
     	h)  help && exit 0;;
     	i)

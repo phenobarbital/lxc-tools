@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Stub file: (test role)
+#
+
+set -e
+
+# return container's rootfs
+prefix=$1
+
+#
+# Log our start
+#
+message "role $0 starting"
+
+info "\n Running role in ${prefix} \n"
+
+#
+#  Log our finish
+#
+message "role $0 finished"

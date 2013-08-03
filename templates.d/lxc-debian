@@ -1,0 +1,85 @@
+#!/bin/bash
+##
+#  /usr/lib/lxc-tools/templates.d/lxc-debian
+#
+#  Build container from debian rules
+##
+#
+# debootstrap debian install
+#
+
+download_debian() 
+{
+    
+    mkdir -p "$CACHE/$SUITE/partial-$ARCH"
+    if [ $? -ne 0 ]; then
+       	error "Failed to create '$CACHE/$SUITE/partial-$ARCH' directory"
+       	return 1
+    fi
+    # download a mini debian into a cache
+    message "Downloading Debian minimal ..."
+    debootstrap --verbose --variant=$VARIANT --arch=$ARCH --include $EXTRA_PACKAGES \
+        $SUITE $CACHE/$SUITE/partial-$ARCH $MIRROR
+    RESULT=$?
+
+    if [ "$RESULT" != "0" ]; then
+       error "Failed to download the rootfs, aborting."
+       rm -fR "$CACHE/$SUITE/partial-$ARCH"
+       exit 1
+    fi
+
+    mv "$CACHE/$SUITE/partial-$ARCH" "$CACHE/$SUITE/rootfs-$ARCH"
+    info "\nDownload Debian complete.\n"
+
+    return 0
+}
+
+install_debian() 
+{
+
+    mkdir -p /var/lock/subsys/
+    (
+        flock -n -x 200
+        if [ $? -ne 0 ]; then
+            error "Cache repository is busy."
+            exit 1
+        fi
+
+        # check the mini debian was not already downloaded
+        message "Checking cache download in $CACHE/$SUITE/rootfs-$ARCH ... "
+        if [ ! -e "$CACHE/$SUITE/rootfs-$ARCH" ]; then
+            download_debian
+            if [ $? -ne 0 ]; then
+                error "Failed to download 'Debian Base'"
+                exit 1
+            fi
+        fi
+
+        # make a local copy of the minidebian
+        info "Copying rootfs to $ROOTFS..."
+        cp -apr $CACHE/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
+        if [ $? -ne 0 ]; then
+            error "Failed to copy rootfs"
+            exit 1
+        fi
+
+        return 0
+
+        ) 200>/var/lock/subsys/lxc
+
+    return $?
+}
+
+
+create_container()
+{
+	info "\n= Creating a Debian-Based LXC container =\n"
+	# create cache and install Debian
+	install_debian
+	# configure chroot
+	# running hooks
+	# configure debian services
+	# cleanup debian
+	info "\nDebian LXC Container created\n"
+	return 0
+}
