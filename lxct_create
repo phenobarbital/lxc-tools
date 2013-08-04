@@ -53,26 +53,34 @@ ROLE=''
 HOSTNAME=''
 
 usage() {
-    echo "Usage: $(basename $0) {create|test} [-n NAME] [-t TEMPLATE] [-r ROLE]"
+    echo "Usage: $(basename $0) [-n NAME] [-t TEMPLATE] [-r ROLE]"
     exit 0
 }
 
 help() {
+	usage
 cat <<EOF
-    
-This script is a helper to create lxc system containers.
+
+This script is a helper to create lxc system containers
 
 The script will create the container configuration file following
-the informations submitted interactively with 'lxct-create create'
+the informations submitted interactively with 'lxct-create'
 
-  -n, --name                 container hostname
-  -t, --template             template name (debian, ubuntu, canaima, etc)
-  -r, --role                 role-based template name
-  -s, --size                 if lvm or btrfs, volume size
-  -i, --iface                if macvlan or vlan option, interface name (ex: eth0)
+Options:
+  -n, --name                 specify the name of the lxc container
+  -t, --template             create container from a template script (debian, ubuntu, canaima, etc)
+  -r, --role                 role-based script for running in container after creation
+  -B, --backend				 define backend for container storage (default: dir, LVM or btrfs) 
+  -s, --size                 if LVM or btrfs, volume size
+  -f, --fs					 if LVM, set filesystem format (ext4, xfs, btrfs)
+  -l, --lvm                  set the LVM volume group name for container creation
+  -n, --net					 specify network option (veth, macvlan, vlan, empty)
+  -i, --iface                if macvlan or vlan option, define interface name (ex: eth0)
   -v, --vlan                 if vlan is enabled, define vlan-id
-      --help     muestra esta ayuda y finaliza
-      --version  informa de la versión y finaliza
+  --dhcp					 container interface is in dhcp mode
+  --ip						 IP Address of container
+      --help     give this help list
+      --version  print program version
 EOF
 }
 
@@ -103,18 +111,18 @@ function get_template()
 function get_role()
 {
 	roledir
-	if [ ! -z "$ROLE" ]; then
+	if [ ! -z "$ROLENAME" ]; then
 		#verifico que el rol existe
-		if [ -f "$ROLEDIR/$ROLE" ]; then
+		if [ -f "$ROLEDIR/$ROLENAME" ]; then
 			# verifico ademas la permisologia
-			if [ ! -x "$ROLEDIR/$ROLE" ]; then
-				error "$(basename $0) role $ROLE is not executable, try chmod o+x $ROLEDIR/ROLE"
+			if [ ! -x "$ROLEDIR/$ROLENAME" ]; then
+				error "$(basename $0) role $ROLENAME is not executable, try chmod o+x $ROLEDIR/ROLENAME"
 			else
-				ROLE="$ROLEDIR/$ROLE"
+				ROLE="$ROLEDIR/$ROLENAME"
 				return 0
 			fi
 		else
-			error "$(basename $0) role $ROLE not exists in $ROLEDIR"
+			error "$(basename $0) role $ROLENAME not exists in $ROLEDIR"
 			return 1
 		fi
 	fi
@@ -420,48 +428,124 @@ if [ $# = 0 ]; then
     exit 1
 fi
 
-COMMAND=$1
+check_backend()
+{
+	if [ "$1" != "dir" ] || [ "$1" != "lvm" ] || [ "$1" != "btrfs" ]; then
+		usage_err "option '$1' invalid backend"
+	fi
+}
 
-shift
-while getopts "n:d:i:r:v:h" flag ; do
-    case "$flag" in
-    	h)  help && exit 0;;
-    	i)
-			# interface name
-			IFACE="$OPTARG";;
-		v)
-			# vlan id
-			VLAN_ID="$OPTARG";;
-        t)  # template
-        	TEMPLATE="$OPTARG";;
-        n)  # name
-        	NAME="$OPTARG";;
-        r)  # role-name
-        	ROLE="$OPTARG";;
-        s)
-			# size
-			SIZE="$OPTARG";;
-        *)     usage && exit 1;;
+check_net()
+{
+	if [ "$1" != "veth" ] || [ "$1" != "macvlan" ] || [ "$1" != "vlan" ] || [ "$1" != "empty" ]; then
+		usage_err "option '$1' invalid network option"
+	fi
+}
+
+
+while [ $# -gt 0 ]; do
+    opt="$1"
+    shift
+    case "$opt" in
+        -n|--name)
+            optarg_check $opt "$1"
+            NAME=$1
+            shift
+            ;;
+        -r|--role)
+            optarg_check $opt "$1"
+            ROLENAME=$1
+            shift
+            ;;
+        -t|--template)
+            optarg_check $opt "$1"
+            TEMPLATE=$1
+            shift
+            ;;
+        -B|--backend)
+            check_backend "$1"
+            BACKEND_METHOD=$1
+            shift
+            ;;
+        -d|--dir)
+            optarg_check $opt "$1"
+            DIR=$1
+            shift
+            ;;         
+        -l|--lvm)
+            optarg_check $opt "$1"
+            LVM=$1
+            shift
+            ;;
+        -n|--net)
+			check_net "$1"
+			NET_TYPE=$1
+			shift
+			;;
+        -i|--iface)
+            optarg_check $opt "$1"
+            IFACE=$1
+            shift
+            ;;            
+        -v|--vlan)
+            optarg_check $opt "$1"
+            VLAN_ID=$1
+            shift
+            ;;
+        -f|--fs)
+            optarg_check $opt "$1"
+            FS=$1
+            shift
+            ;;
+        -s|--size)
+            optarg_check $opt "$1"
+            SIZE=$1
+            shift
+            ;;
+        --dhcp)
+            DHCP='y'
+            shift
+            ;;
+        --ip)
+			optarg_check $opt "$1"
+			IP=$1
+			shift
+			;;
+        --dist)
+			optarg_check $opt "$1"
+            DIST=$1
+            shift
+            ;;
+        --suite)
+			optarg_check $opt "$1"
+            SUITE=$1
+            shift
+            ;;              
+        -D|--debug)
+            VERBOSE='true'
+            shift
+            ;;
+        --version)
+			get_version
+			exit 0;;
+        -h|--help)
+            help
+            exit 1
+            ;;
+        --)
+            break;;
+        -?)
+            usage_err "unknown option '$opt'"
+            ;;
+        -*)
+            # split opts -abc into -a -b -c
+            set -- $(echo "${opt#-}" | sed 's/\(.\)/ -\1/g') "$@"
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
     esac
 done
-
-case "$COMMAND" in
-    "create")
-    	# container creation
-    	create;;
-    "test")
-    	# container test
-    	check;;
-    "-h")
-		help && exit 0;;
-    "--help")
-		help && exit 0;;
-	"--version")
-		get_version && exit 0;;
-    *)
-    	usage
-        exit 1
-        ;;
-esac
 
 exit 0
