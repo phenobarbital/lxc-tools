@@ -1,0 +1,6 @@
+#!/bin/bash
+# 99-configure-utilities
+#
+#  This script configure vim, bashrc, profile and other utilities in the
+# chroot() installation.
+#
