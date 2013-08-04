@@ -110,6 +110,7 @@ function get_role()
 			if [ ! -x "$ROLEDIR/$ROLE" ]; then
 				error "$(basename $0) role $ROLE is not executable, try chmod o+x $ROLEDIR/ROLE"
 			else
+				ROLE="$ROLEDIR/$ROLE"
 				return 0
 			fi
 		else
@@ -397,8 +398,10 @@ function create() {
     if [ "$?" -ne "0" ]; then
     	error "failed to get role $ROLE information"
     else
-		info "\n = Executing role $ROLE = \n"
-		. $ROLEDIR/$ROLE $ROOTFS
+		if [ ! -z "$ROLE" ]; then
+			info "\n = Executing role $ROLE = \n"
+			. $ROLE $ROOTFS
+		fi
     fi
     message "Done."
     info "\nYou can run your container with the 'lxc-start -n $NAME'\n"    
