@@ -1,0 +1,8 @@
+LXC-tools TODO list
+-------------------
+
+* Generate a random password for more "automatically" creation of container
+* LVM creation functionality
+* BTRFS creation functionality
+* First "usable" role script
+* 

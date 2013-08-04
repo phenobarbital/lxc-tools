@@ -34,7 +34,6 @@ endif
  
 set showmatch       " Show matching brackets.
 set ignorecase      " Do case insensitive matching
-set hlsearch        " Resaltar la búsqueda
 set incsearch       " Incremental search
 set mouse=a         " Enable mouse usage (all modes)
 set number          " Mostrar los números de línea
@@ -71,7 +70,6 @@ if has("autocmd")
 endif
     set viewoptions=folds,options,cursor,unix,slash " better unix / windows compatibility
     set history=1000                " Store a ton of history (default is 20)
-    set spell                       " spell checking on
     " }
 " }
 
@@ -84,7 +82,6 @@ endif
     endif
     set showmatch                   " show matching brackets/parenthesis
     set incsearch                   " find as you type search
-    set hlsearch                    " highlight search terms
 " }
 
 " Formatting {
