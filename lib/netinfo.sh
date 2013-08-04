@@ -23,14 +23,7 @@
 
 # get firt available bridge
 function get_bridge() {
-	# obtenemos la lista de interfaces activas
-	for i in `cat /proc/net/dev | grep ':' | cut -d ':' -f 1`; do
-		if [ -z `brctl show $i | grep $1 | head -n1 | awk '{print $1}' | grep "Operation not supported"` ]; then
-			brctl show | grep "$i" | awk '{print $1}'
-			return 0
-		fi
-	done
-	return 1
+	brctl show | tail -n +2 | head -n1 | awk '{print $1}'
 }
 
 # get ip from interface
