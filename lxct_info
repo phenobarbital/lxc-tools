@@ -21,8 +21,6 @@
 # get information about environment, lxc and lxc-tools
 ##
 
-set -e
-
 if [ "$(id -u)" != "0" ]; then
    echo "$(basename $0): must be run as root" >&2
    exit 1
