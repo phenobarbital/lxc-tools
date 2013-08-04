@@ -111,8 +111,6 @@ configure_debian()
 	debian_inittab
 	# configure via mknod devices
 	debian_devices
-	# configure fstab
-	debian_fstab
 	# configure debian network
 	debian_network
 	# running basic debian hooks
@@ -136,22 +134,6 @@ debian_devices()
     mount -o bind /sys "$ROOTFS/sys"
 	# Bind mount systems apt cache
     mount -o bind /var/cache/apt/archives "$ROOTFS/var/cache/apt/archives"	
-}
-
-# Write out a custom fstab
-debian_fstab() {
-cat <<EOF > $ROOTFS/etc/fstab
-# /etc/fstab: static file system information.
-#
-# Use 'blkid' to print the universally unique identifier for a
-# device; this may be used with UUID= as a more robust way to name devices
-# that works even if disks are added and removed. See fstab(5).
-#
-# <file system> <mount point>   <type>  <options>       <dump>  <pass>
-
-tmpfs /tmp tmpfs nosuid,noexec,nodev,rw 0 0
-tmpfs /dev/shm tmpfs nosuid,noexec,nodev,rw 0 0
-EOF
 }
 
 debian_inittab() {
