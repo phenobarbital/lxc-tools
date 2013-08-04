@@ -197,3 +197,14 @@ function install_package()
 	fi
 	# TODO: other distro versions
 }
+
+function remove_package()
+{
+	# get distribution
+	dist=`get_distribution`
+	if [ "$dist" = "Debian" ]; then
+		message "remove Debian package $@"
+		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
+	fi
+	# TODO: other distro versions
+}

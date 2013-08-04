@@ -4,3 +4,51 @@
 #  This script configure vim, bashrc, profile and other utilities in the
 # chroot() installation.
 #
+
+## install screen
+install_package screen
+
+## configure bashrc
+
+# for all users
+/etc/skel/.bashrc
+
+
+## configure vim
+
+
+## install bash-completion
+install_package bash-completion
+
+## enable bash-completion
+
+#
+#  Remove some standard packages.
+#
+
+# PPP stuff.
+remove_package pppconfig
+remove_package pppoeconf
+remove_package pppoe
+remove_package ppp
+remove_package libpcap0.7
+
+# Editors
+remove_package nano
+remove_package ed
+remove_package nvi
+
+# Syslog
+remove_package klogd
+remove_package sysklogd
+
+# manpages
+remove_package manpages
+remove_package man-db
+remove_package info
+
+# misc
+remove_package tasksel tasksel-data
+remove_package pciutils
+remove_package fdutils
+remove_package cpio
