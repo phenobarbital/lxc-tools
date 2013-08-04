@@ -6,3 +6,5 @@ LXC-tools TODO list
 * BTRFS creation functionality
 * First "usable" role script
 * Templates Ubuntu and Canaima
+* Multiple role option (ex --role sudo,shorewall,stub,webserver)
+* fole for Debian hardening (install psad,shorewall,portsentry,fail2ban)
