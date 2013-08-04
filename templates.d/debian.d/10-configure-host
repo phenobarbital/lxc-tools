@@ -1,0 +1,19 @@
+#!/bin/bash
+# 10-configure-host
+#
+# configure host.conf, hosts.allow and hosts.deny options
+#
+
+
+#
+# configure host
+#
+
+cat <<HOSTCONF_EOF >>$ROOTFS/etc/host.conf
+multi on
+order hosts,bind
+HOSTCONF_EOF
+
+cat <<HOSTALLOW >>$ROOTFS/etc/host.allow
+ALL: $GATEWAY
+HOSTALLOW

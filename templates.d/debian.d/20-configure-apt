@@ -29,7 +29,7 @@ deb $MIRROR $SUITE-backports main
 EOF_BACK
 fi
 
-cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/$DIST.conf
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/10-$DIST
 Acquire::PDiffs "false";
 // Acquire::Language "none";
 APT::Clean-Installed "true";
@@ -37,6 +37,10 @@ APT::Get:AutomaticRemove "true";
 APT::Get::HideAutoRemove "false";
 APT::Get:Show-Upgraded "true";
 APT::Install-Recommends "false";
+EOF
+
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/80-update
+Acquire::Check-Valid-Until "false";
 EOF
 
 cat <<EOF > $ROOTFS/etc/apt/preferences.d/$DIST.pref
@@ -49,7 +53,7 @@ Pin: release n=$SUITE-updates
 Pin-Priority: 999
 EOF
 
-cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/recommends.conf
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/90-recommends
 APT::Install-Recommends "false";
 EOF
 
