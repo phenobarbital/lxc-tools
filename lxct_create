@@ -21,7 +21,7 @@
 # create a lxc container
 ##
 
-set -e
+# set -e
 
 # get configuration
 if [ -e /etc/lxc-tools/lxc-tools.conf ]; then
@@ -443,7 +443,6 @@ check_net()
 	fi
 }
 
-
 while [ $# -gt 0 ]; do
     opt="$1"
     shift
@@ -548,5 +547,8 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
+# main function
+create
 
 exit 0
