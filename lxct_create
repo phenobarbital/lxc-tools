@@ -140,6 +140,7 @@ function get_name() {
                     exit 1
                 fi
         fi
+        HOSTNAME=$NAME.$DOMAIN
 }
 
 function get_size() {
@@ -397,10 +398,10 @@ function create() {
     fi
     #
     # add this container to lxc
-	#if [ -f "$CONFIGFILE" ] ; then
+	if [ -f "$CONFIGFILE" ] ; then
   	#	#si existe el archivo, entonces
-  	#	$LXC_CREATE -n $NAME -f $CONFIGFILE
-	#fi
+  		lxc-create -n $NAME -f $CONFIGFILE
+	fi
 	# running any role defined into chroot
 	get_role
     if [ "$?" -ne "0" ]; then

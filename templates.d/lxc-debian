@@ -74,13 +74,15 @@ install_debian()
 
 debian_network()
 {
-	# setting up hostname
-	HOSTNAME=$NAME.$DOMAIN
 	if [ "$DHCP" = "y" ]; then
 cat <<EOF >> $ROOTFS/etc/network/interfaces
 # interface $LAN_INTERFACE
 auto $LAN_INTERFACE
 iface $LAN_INTERFACE inet dhcp
+EOF
+cat <<EOF > $ROOTFS/etc/hosts
+# $HOSTNAME
+127.0.1.1	$HOSTNAME $NAME
 EOF
 	else
 cat <<EOF >> $ROOTFS/etc/network/interfaces
@@ -98,8 +100,8 @@ $IP	$HOSTNAME $NAME
 EOF
 	fi
 # set the hostname
-echo $NAME > ${prefix}/etc/hostname
-echo $HOSTNAME > ${prefix}/etc/mailname
+echo $NAME > $ROOTFS/etc/hostname
+echo $HOSTNAME > $ROOTFS/etc/mailname
 
 }
 
