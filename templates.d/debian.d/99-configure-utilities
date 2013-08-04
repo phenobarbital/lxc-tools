@@ -10,10 +10,13 @@ install_package screen
 
 ## configure bashrc
 sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' $ROOTFS/etc/skel/.bashrc
+# enable colors in bash
+sed -i "s/^# export LS_OPTIONS='--color=auto'/export LS_OPTIONS='--color=auto'/" $ROOTFS/root/.bashrc
+sed -i 's/^# eval "`dircolors`"/eval "`dircolors`"/' $ROOTFS/root/.bashrc
+sed -i "s/^# alias ls='ls $LS_OPTIONS'/alias ls='ls $LS_OPTIONS'/" $ROOTFS/root/.bashrc
+sed -i "s/^# alias ll='ls $LS_OPTIONS -l'/alias ll='ls $LS_OPTIONS -l'/" $ROOTFS/root/.bashrc
 
-sed -i "s/^#export LS_OPTIONS='--color=auto'/export LS_OPTIONS='--color=auto'/" $ROOTFS/root/.bashrc
-sed -i 's/^#eval "`dircolors`"/eval "`dircolors`"/' $ROOTFS/root/.bashrc
- 
+
 ## configure vim
 cat <<VIM_EOF > $ROOTFS/etc/vim/vimrc
 
