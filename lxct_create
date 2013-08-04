@@ -275,13 +275,14 @@ function touch_config() {
 }
 
 function create_lxc_config() {
+	ARCHITECTURE=`uname -m`
 cat <<EOF > $CONFIGFILE
 # $CONFIGFILE
 
 ## Container
 lxc.utsname                             = $NAME
 lxc.rootfs                              = $ROOTFS
-lxc.arch                                = $ARCH
+lxc.arch                                = $ARCHITECTURE
 lxc.console                             = /var/log/lxc/$NAME.console
 lxc.tty                                 = 4
 lxc.pts                                 = 1024
@@ -330,7 +331,6 @@ lxc.cgroup.devices.allow                = c 1:5 rwm
 lxc.cgroup.cpu.shares                  = 1024
 lxc.cgroup.cpuset.cpus                 = 1
 lxc.cgroup.memory.limit_in_bytes       = $MEMORY
-lxc.cgroup.memory.memsw.limit_in_bytes = 256M
 
 ## Filesystem
 lxc.mount.entry                         = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
@@ -413,7 +413,7 @@ function create() {
 		fi
     fi
     message "Done."
-    info "\nYou can run your container with the 'lxc-start -n $NAME'\n"    
+    info "\nYou can run your container with the 'lxc-start -n $NAME -d'\n"    
 }
 
 ### main execution program ###

@@ -13,9 +13,9 @@ echo ${ACCOUNTINFO} >> $ROOTFS/etc/passwd
 echo ${SHADOWINFO} >> $ROOTFS/etc/shadow
 
 # define password for root account
-info "\n ====== \n"
+message "======"
 info "\n Define root password for container\n"
-
+message "======"
 PASS=''
 while /bin/true; do
         echo -n "New password: "

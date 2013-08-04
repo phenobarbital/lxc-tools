@@ -80,7 +80,7 @@ cat <<EOF >> $ROOTFS/etc/network/interfaces
 auto $LAN_INTERFACE
 iface $LAN_INTERFACE inet dhcp
 EOF
-cat <<EOF > $ROOTFS/etc/hosts
+cat <<EOF >> $ROOTFS/etc/hosts
 # $HOSTNAME
 127.0.1.1	$HOSTNAME $NAME
 EOF
@@ -94,7 +94,7 @@ iface $LAN_INTERFACE inet static
 	network $NETWORK
 	gateway $GATEWAY
 EOF
-cat <<EOF > $ROOTFS/etc/hosts
+cat <<EOF >> $ROOTFS/etc/hosts
 # $HOSTNAME
 $IP	$HOSTNAME $NAME
 EOF
