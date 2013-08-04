@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 25-disable-selinux
 #
 # Disable selinux in the container

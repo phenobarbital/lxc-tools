@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 20-configure-apt
 #
 # This script configure apt
@@ -57,3 +57,4 @@ EOF
 #  Now that the sources have been setup make sure the system is up to date.
 #
 chroot $ROOTFS /usr/bin/apt-get update
+chroot $ROOTFS /usr/bin/apt-get upgrade -y

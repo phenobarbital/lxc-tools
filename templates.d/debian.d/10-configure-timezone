@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 02-configure-timezone
 #
 # This script configure timezone

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 01-disable-daemons
 #
 #  This script ensures that daemons will not be started inside our

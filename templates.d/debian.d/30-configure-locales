@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 30-configure-locales
 #
 # install and configure locales

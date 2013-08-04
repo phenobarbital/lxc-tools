@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # 70-configure-ssh
 #
 # install and configure SSH
