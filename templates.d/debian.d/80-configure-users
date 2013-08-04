@@ -13,6 +13,7 @@ echo ${ACCOUNTINFO} >> $ROOTFS/etc/passwd
 echo ${SHADOWINFO} >> $ROOTFS/etc/shadow
 
 # define password for root account
+# TODO: random password
 message "======"
 info "\n Define root password for container\n"
 message "======"

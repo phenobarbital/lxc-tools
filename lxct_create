@@ -508,6 +508,7 @@ while [ $# -gt 0 ]; do
             ;;
         --ip)
 			optarg_check $opt "$1"
+			DHCP='n'
 			IP=$1
 			shift
 			;;
