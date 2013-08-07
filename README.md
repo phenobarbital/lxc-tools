@@ -16,6 +16,12 @@ LXC-tools son un conjunto de scripts que permiten crear contenedores personaliza
 - lxc
 - debootstrap
 - lsb-release
+- curl
+- wget
+
+* para construir contenedores CentOS se requiere adicionalmente:
+- yum
+- rpm
 
 Authors:
  Jesus Lara <jesuslarag@gmail.com>

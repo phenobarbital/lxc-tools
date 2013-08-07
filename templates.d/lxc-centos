@@ -1,0 +1,308 @@
+#!/bin/bash
+##
+#  /usr/lib/lxc-tools/templates.d/lxc-centos
+#
+#  Build container from centos 6.x
+##
+#
+# centos 6.x lxc container install
+#
+# based on:
+# Daniel Lezcano <daniel.lezcano@free.fr>
+# Ramez Hanna <rhanna@informatiq.org>
+# Authors:
+# Jesus Lara <jesuslarag@phenobarbital.info>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+# re-define options
+DIST='centos'
+RELEASE='6'
+VERSION='6-4.el6.centos.10'
+
+download_centos()
+{
+	INSTALL_ROOT="$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE"
+	mkdir -p $INSTALL_ROOT
+    if [ $? -ne 0 ]; then
+		error "Failed to create '$INSTALL_ROOT' directory"
+       	return 1
+    fi
+
+    # download a mini centos into a cache
+    message "Downloading centos minimal ..."
+    # YUM="yum --installroot $INSTALL_ROOT -y --nogpgcheck"
+    YUM="yum --disablerepo=updates --installroot=$INSTALL_ROOT --exclude=*.i386,*.i686 --nogpgcheck --color=never -y --config=/etc/yum/yum.conf"
+    RPM="rpm --root $INSTALL_ROOT --ignorearch -ivh --force --nodeps"
+    PKG_LIST="rpm-python python-pycurl pyxml wget libxml2-python libxml2 initscripts passwd rsyslog vim-minimal dhclient chkconfig rootfiles policycoreutils openssh-clients openssl curl"
+    MIRRORLIST_URL="http://mirrorlist.centos.org/?release=6&arch=x86_64&repo=os"
+    
+	DOWNLOAD_OK=no
+    for trynumber in 1 2 3; do
+        [ $trynumber != 1 ] && echo "Trying again..."
+        MIRROR_URL=$(curl -s -S -f "$MIRRORLIST_URL" | head -n1 | tail -n1)
+        if [ $? -ne 0 ] || [ -z "$MIRROR_URL" ]; then
+            echo "Failed to get a mirror"
+            continue
+        fi
+        RELEASE_URL="$MIRROR_URL/Packages/centos-release-$VERSION.$ARCHITECTURE.rpm"
+        echo "Fetching from: $RELEASE_URL"
+        curl -f "$RELEASE_URL" > $INSTALL_ROOT/centos-release-$VERSION.$ARCHITECTURE.rpm
+        if [ $? -ne 0 ]; then
+            echo "Failed to download centos release rpm"
+            continue
+        fi
+        DOWNLOAD_OK=yes
+        break
+    done
+    if [ $DOWNLOAD_OK != yes ]; then
+        echo "Aborting"
+        return 1
+    fi
+    
+	mkdir -p $INSTALL_ROOT/var/lib/rpm
+    $RPM  --initdb
+    $RPM $INSTALL_ROOT/centos-release-$VERSION.$ARCHITECTURE.rpm
+    $YUM install $PKG_LIST
+    if [ $? -ne 0 ]; then
+        echo "Failed to install centos base packages"
+        exit 1
+    fi    
+    chroot $INSTALL_ROOT rm -f /var/lib/rpm/__*
+    chroot $INSTALL_ROOT rpm --rebuilddb
+
+    if [ $? -ne 0 ]; then
+		echo "Failed to download the rootfs, aborting."
+		return 1
+    fi
+ 
+    mv "$INSTALL_ROOT" "$cache/rootfs"
+    echo "Download complete."
+ 
+    return 0    
+}
+# download a mini centos into a cache
+download_centos1()
+{
+
+    mkdir -p "$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE"
+    if [ $? -ne 0 ]; then
+		error "Failed to create '$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE' directory"
+       	return 1
+    fi
+
+    # download a mini centos into a cache
+    message "Downloading centos minimal ..."
+    YUM="yum --installroot $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE -y --nogpgcheck"
+    PKG_LIST="yum initscripts passwd rsyslog vim-minimal dhclient chkconfig rootfiles policycoreutils openssh-clients openssl curl"
+    # RELEASE_URL="http://ftp.jaist.ac.jp/pub/Linux/CentOS/$release/os/$arch_base/Packages/centos-release-6-4.el6.centos.10.$arch.rpm"
+    RELEASE_URL="http://mirror.centos.org/centos/$RELEASE/os/$ARCHITECTURE/Packages/centos-release-$VERSION.$ARCHITECTURE.rpm"
+    # download a minimal version:
+    #http://mirrors.ucr.ac.cr/centos/6.4/isos/x86_64/CentOS-6.4-x86_64-minimal.iso
+    #http://mirror.centos.org/centos/6/os/x86_64/Packages/rpm-4.8.0-32.el6.x86_64.rpm
+    
+    curl -f -L "$RELEASE_URL" > $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE/centos-release-$RELEASE.$ARCHITECTURE.rpm
+
+    mkdir -p $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE/var/lib/rpm
+    rpm --root $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE --initdb
+    rpm --root $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE -ivh $CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE/centos-release-$RELEASE.noarch.rpm
+    $YUM install $PKG_LIST
+    $YUM install time perl-core mlocate tree strace sudo bind-utils man ntp vixie-cron which wget screen openssh-server openssh-clients subversion git
+    $YUM groupinstall "Development Tools"
+
+    if [ $? -ne 0 ]; then
+       error "Failed to download centos rootfs, aborting."
+       rm -fR "$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE"
+       exit 1
+    fi
+
+    mv "$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE" "$CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE"
+    info "\nDownload $DIST $RELEASE complete.\n"
+
+    return 0
+}
+
+# make a local copy of the mini centos
+copy_centos()
+{
+    info "Copying rootfs to $ROOTFS..."
+    cp -apr $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE/* $ROOTFS/ || return 1
+    if [ $? -ne 0 ]; then
+		error "Failed to copy rootfs"
+        exit 1
+    fi
+    return 0
+}
+
+# install centos cache in rootfs
+install_centos()
+{
+    mkdir -p /var/lock/subsys/
+    (
+        flock -n -x 200
+        if [ $? -ne 0 ]; then
+            error "Cache repository is busy."
+            exit 1
+        fi
+        
+        # cleaning cache of mini centos
+        if [ "$CLEAN_CACHE" -eq "1" ]; then
+			message "Cache found in $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE. clearing ..."
+			rm --preserve-root --one-file-system -fR $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE && echo "Done." || exit 1
+        fi
+        
+        # check the mini debian was not already downloaded
+        message "Checking cache download in $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE ... "
+        if [ ! -e "$CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE" ]; then
+            download_centos
+            if [ $? -ne 0 ]; then
+                error "Failed to download 'CentOS Base'"
+                exit 1
+            fi
+        fi
+
+        copy_centos
+        
+        return 0
+
+        ) 200>/var/lock/subsys/lxc
+
+    return $?
+}
+
+centos_network()
+{
+	if [ "$DHCP" = "y" ]; then
+		# configure using DHCP
+cat <<EOF > $ROOTFS/etc/sysconfig/network-scripts/ifcfg-$LAN_INTERFACE
+DEVICE=$LAN_INTERFACE
+BOOTPROTO=dhcp
+ONBOOT=yes
+NM_CONTROLLED=no
+USERCTL=yes
+PEERDNS=yes
+IPV6INIT=no
+TYPE=Ethernet
+MTU=$MTU
+EOF
+cat <<EOF >> $ROOTFS/etc/hosts
+# $HOSTNAME
+127.0.1.1	$HOSTNAME $NAME
+EOF
+	else
+cat <<EOF > $ROOTFS/etc/sysconfig/network-scripts/ifcfg-$LAN_INTERFACE
+DEVICE=$LAN_INTERFACE
+NETWORK=$NETWORK
+NETMASK=$NETMASK
+IPADDR=$IP
+GATEWAY=$GATEWAY
+BOOTPROTO=none
+ONBOOT=yes
+NM_CONTROLLED=no
+USERCTL=yes
+PEERDNS=yes
+IPV6INIT=no
+TYPE=Ethernet
+MTU=$MTU
+EOF
+cat <<EOF >> $ROOTFS/etc/hosts
+# $HOSTNAME
+$IP	$HOSTNAME $NAME
+EOF
+	fi
+# set the hostname
+cat <<EOF > $ROOTFS/etc/sysconfig/network
+NETWORKING=yes
+NETWORKING_IPV6=no
+HOSTNAME=$HOSTNAME
+EOF
+echo $NAME > $ROOTFS/etc/hostname
+echo $HOSTNAME > $ROOTFS/etc/mailname
+}
+
+centos_devices()
+{
+	DEV="$ROOTFS/dev"
+	mknod -m 666 ${dev_path}/tty c 5 0
+    for tty in $(seq 1 4); do
+	if [ ! -e $DEV/tty$tty ]; then
+	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
+	fi
+    done	
+	mknod -m 666 ${dev_path}/null c 1 3
+    mknod -m 666 ${dev_path}/zero c 1 5
+    mknod -m 666 ${dev_path}/random c 1 8
+    mknod -m 666 ${dev_path}/urandom c 1 9
+    mkdir -m 755 ${dev_path}/pts
+    mkdir -m 1777 ${dev_path}/shm
+    mknod -m 600 ${dev_path}/console c 5 1
+    mknod -m 666 ${dev_path}/full c 1 7
+    mknod -m 600 ${dev_path}/initctl p
+    # Mount pseudo-filesystems
+    mount -o bind /dev/pts "$ROOTFS/dev/pts"
+    mount -o bind /proc "$ROOTFS/proc"
+    mount -o bind /sys "$ROOTFS/sys"    
+# configure a minimal fstab
+cat <<EOF > $ROOTFS/etc/fstab
+/dev/root               /                       rootfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
+none                    /dev/shm                tmpfs    nosuid,nodev    0 0
+EOF
+}
+
+configure_centos()
+{
+	# configure via mknod devices
+	centos_devices
+	# configure debian network
+	centos_network
+	# running basic debian hooks
+	CENTOS="$TEMPLATEDIR/centos.d"
+	for f in $(find $CENTOS/* -maxdepth 1 -type f | sort --numeric-sort); do
+		. $f
+	done
+}
+
+centos_cleanup()
+{
+	#
+	# yum clean cache
+	#
+	chroot $ROOTFS /usr/bin/yum clean all
+    # Unmount pseudo-filesystems
+    umount "$ROOTFS/dev/pts"
+    umount "$ROOTFS/proc"
+    umount "$ROOTFS/sys"	
+}
+
+create_container()
+{
+	info "\n= Creating a CentOS-Based LXC container =\n"
+	# create cache and install centos
+	install_centos
+    if [ $? -ne 0 ]; then
+       error "Failed to install a 'CentOS Base' container"
+       exit 1
+    fi	
+	# configure chroot
+	configure_centos
+    if [ $? -ne 0 ]; then
+       error "Failed to configure centos container"
+       exit 1
+    fi
+	# cleanup centos
+	centos_cleanup
+	info "\nCentOS LXC Container created\n"
+	return 0
+}
+

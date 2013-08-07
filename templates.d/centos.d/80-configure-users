@@ -1,0 +1,62 @@
+#!/bin/bash
+# 80-configure-users
+#
+# configure users and root password
+#
+
+# copy first user from host
+ACCOUNT=`getent passwd | grep 1000 | cut -d':' -f1`
+ACCOUNTINFO=`getent passwd | grep 1000 | head -n1`
+SHADOWINFO=`getent shadow | grep "^$ACCOUNT:"`
+
+echo ${ACCOUNTINFO} >> $ROOTFS/etc/passwd
+echo ${SHADOWINFO} >> $ROOTFS/etc/shadow
+
+# define password for root account
+# TODO: random password
+message "======"
+info "\n Define root password for container\n"
+message "======"
+PASS=''
+while /bin/true; do
+        echo -n "New password: "
+        stty -echo
+        read pass1
+        stty echo
+        echo
+        if [ -z "$pass1" ]; then
+            echo "Error, password cannot be empty"
+            echo
+            continue
+        fi
+        echo -n "Repeat new password: "
+        stty -echo
+        read pass2
+        stty echo
+        echo
+        if [ "$pass1" != "$pass2" ]; then
+            echo "Error, passwords don't match"
+            echo
+            continue
+        fi
+        PASS=$pass1
+        break
+done
+
+#configure password for root
+echo "root:$PASS" | chroot $ROOTFS chpasswd
+
+# configure sudo
+#
+# Install sudo package
+#
+install_package sudo
+
+# enable wheel
+sed -Ei 's/^#(%wheel.*)/\1/' /etc/sudoers
+
+# fix permissions
+chmod 440 $ROOTFS/etc/sudoers
+
+# add user to sudo group
+chroot $ROOTFS /usr/sbin/usermod -G wheel $ACCOUNT

@@ -132,6 +132,8 @@ function get_arch()
 	fi
 	if [ `get_distribution` = "Debian" ]; then
 		dpkg --print-architecture
+	else
+		uname -m
 	fi
 }
 
@@ -187,13 +189,19 @@ function cgroup_enabled()
 function install_package()
 {
 	# get distribution
-	dist=`get_distribution`
-	if [ "$dist" = "Debian" ]; then
+	#dist=`get_distribution`
+	if [ "$DIST" = "Debian" ]; then
 		message "installing Debian package $@"
 		#
 		# Install the packages
 		#
 		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
+	elif [ "$dist" = "Centos" ]; then
+		message "installing Centos package $@"
+		/usr/bin/yum -y --assume-yes install "$@"
+	else
+		error "unknown package manager for $DIST"
+		return 1
 	fi
 	# TODO: other distro versions
 }
@@ -201,10 +209,16 @@ function install_package()
 function remove_package()
 {
 	# get distribution
-	dist=`get_distribution`
-	if [ "$dist" = "Debian" ]; then
+	# dist=`get_distribution`
+	if [ "$DIST" = "Debian" ]; then
 		message "remove Debian package $@"
 		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
+	elif [ "$dist" = "Centos" ]; then
+		message "remove Centos package $@"
+		/usr/bin/yum -y --assume-yes erase "$@"
+	else
+		error "unknown package manager for $DIST"
+		return 1
 	fi
 	# TODO: other distro versions
 }

@@ -1,6 +1,7 @@
 LXC-tools TODO list
 -------------------
 
+* Add logging functionality (logging creation of containers)
 * Generate a random password for more "automatically" creation of container
 * LVM creation functionality
 * BTRFS creation functionality
@@ -12,5 +13,6 @@ LXC-tools TODO list
 * crear un LXC-container a partir de una vps openvz (backup)
 * crear un LXC-application-container
 * crear un lxc-container a partir de un debootstrap (ubuntu, canaima)
-* crear un contenedor Fedora, CentOS
+* create a CentOS LXC-container (working on)
 * Crear rol para un application-container (ej: bind-chroot)
+* colored bash-messages (error and info functions)

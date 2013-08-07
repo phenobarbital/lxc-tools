@@ -51,13 +51,14 @@ DIST=''
 TEMPLATE=''
 ROLE=''
 HOSTNAME=''
+LAN_INTERFACE='eth0'
 CLEAN_CACHE=0
 
 usage() {
 	echo "Usage: $(basename $0) [-n|--name=<container_name>]
         [-t|--template=<template-name>] [-c|--clean] [-r|--role=<role-name>] [-A|--arch=<arch of the container>]
         [-B|--backend=<dir|LVM|btrfs>] [--dhcp|--ip=<ip>] [-h|--help]"  
-    exit 1
+    return 0
 }
 
 help() {
@@ -74,16 +75,16 @@ Options:
   -t, --template             create container from a template script (debian, ubuntu, canaima, etc)
   -r, --role                 role-based script for running in container after creation
   -c, --clean                create a clean version of cache container
-  -B, --backend				 define backend for container storage (default: dir, LVM or btrfs) 
+  -B, --backend              define backend for container storage (default: dir, LVM or btrfs) 
   -s, --size                 if LVM or btrfs, volume size
-  -f, --fs					 if LVM, set filesystem format (ext4, xfs, btrfs)
+  -f, --fs                   if LVM, set filesystem format (ext4, xfs, btrfs)
   -l, --lvm                  set the LVM volume group name for container creation
-  -n, --net					 specify network option (veth, macvlan, vlan, empty)
+  -n, --net                  specify network option (veth, macvlan, vlan, empty)
   -i, --iface                if macvlan or vlan option, define interface name (ex: eth0)
   -v, --vlan                 if vlan is enabled, define vlan-id
   -D, --debug                Enable debugging information
-  --dhcp					 container interface is in dhcp mode
-  --ip						 IP Address of container
+  --dhcp                     Container interface is in dhcp mode
+  --ip                       IP Address of container
   Help options:
       --help     give this help list
       --usage	 Display brief usage message
@@ -97,18 +98,24 @@ function get_template()
 {
 	templatedir
 	if [ -z "$TEMPLATE" ]; then
+		# creating a container from host-based
 		DIST=`get_distribution`
 		case "$DIST" in
 			"debian"|"Debian"|"DEBIAN")
-				message "using lxc-debian as template"
+				message "- using lxc-debian as template"
 				TEMPLATE="$TEMPLATEDIR/lxc-debian"
 				;;
+			"centos"|"Centos"|"CENTOS"|"CentOS")
+				message "- using lxc-centos as template"
+				TEMPLATE="$TEMPLATEDIR/lxc-centos"
+				;;			
 			*)
 				error "Unknown distribution: $DIST"
 				exit 1
-				;;    	
+				;;
 		esac
-	elif [ -f "$TEMPLATEDIR/lxc-$TEMPLATE"]; then
+	elif [ -f "$TEMPLATEDIR/lxc-$TEMPLATE" ]; then
+		message "- using lxc-$TEMPLATE as template"
 		TEMPLATE="$TEMPLATEDIR/lxc-$TEMPLATE"
 	else
 		error "$(basename $0) template $TEMPLATE not exists, aborted"
@@ -343,7 +350,9 @@ lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 ## Filesystem
 lxc.mount.entry                         = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                         = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
-lxc.mount.entry                         = devpts $ROOTFS/dev/pts devpts defaults 0 0
+lxc.mount.entry                         = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
+lxc.mount.entry							= tmpfs $ROOTFS/var/run tmpfs defaults 0 0
+# lxc.mount.entry							= tmpfs $ROOTFS/dev/shm tmpfs nosuid,nodev    0 0
 EOF
     if [ $? -ne 0 ]; then
         error "$(basename $0) Failed to add configuration"
@@ -391,6 +400,7 @@ function create() {
 		error "$(basename $0) : invalid method $BACKEND_METHOD" >&2
 		exit 1;;
 	esac
+	message "- using backend $BACKEND_METHOD option"
 	# network configuration
 	get_network_info
 	# create config file
