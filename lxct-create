@@ -51,10 +51,13 @@ DIST=''
 TEMPLATE=''
 ROLE=''
 HOSTNAME=''
+CLEAN_CACHE=0
 
 usage() {
-    echo "Usage: $(basename $0) [-n NAME] [-t TEMPLATE] [-r ROLE]"
-    exit 0
+	echo "Usage: $(basename $0) [-n|--name=<container_name>]
+        [-t|--template=<template-name>] [-c|--clean] [-r|--role=<role-name>] [-A|--arch=<arch of the container>]
+        [-B|--backend=<dir|LVM|btrfs>] [--dhcp|--ip=<ip>] [-h|--help]"  
+    exit 1
 }
 
 help() {
@@ -70,6 +73,7 @@ Options:
   -n, --name                 specify the name of the lxc container
   -t, --template             create container from a template script (debian, ubuntu, canaima, etc)
   -r, --role                 role-based script for running in container after creation
+  -c, --clean                create a clean version of cache container
   -B, --backend				 define backend for container storage (default: dir, LVM or btrfs) 
   -s, --size                 if LVM or btrfs, volume size
   -f, --fs					 if LVM, set filesystem format (ext4, xfs, btrfs)
@@ -77,11 +81,15 @@ Options:
   -n, --net					 specify network option (veth, macvlan, vlan, empty)
   -i, --iface                if macvlan or vlan option, define interface name (ex: eth0)
   -v, --vlan                 if vlan is enabled, define vlan-id
+  -D, --debug                Enable debugging information
   --dhcp					 container interface is in dhcp mode
   --ip						 IP Address of container
+  Help options:
       --help     give this help list
+      --usage	 Display brief usage message
       --version  print program version
 EOF
+	exit 1
 }
 
 # get template
@@ -462,6 +470,10 @@ while [ $# -gt 0 ]; do
             TEMPLATE=$1
             shift
             ;;
+        -c|--clean)
+            CLEAN_CACHE=1
+            shift
+            ;;            
         -B|--backend)
             check_backend "$1"
             BACKEND_METHOD=$1

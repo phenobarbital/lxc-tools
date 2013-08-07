@@ -1,3 +1,16 @@
+* create a lxc-container from a openvz template:
+
+http://download.openvz.org/template/precreated/centos-6-x86_64.tar.gz
+http://download.openvz.org/template/precreated/fedora-18-x86_64.tar.gz
+http://download.openvz.org/template/precreated/ubuntu-13.04-x86_64.tar.gz
+
+* crear un LXC a partir de una openvz template
+* crear un LXC-container a partir de una vps openvz (backup)
+* crear un LXC-application-container
+* crear un lxc-container a partir de un debootstrap (ubuntu, canaima)
+* crear un contenedor Fedora, CentOS
+* Crear rol para un application-container (ej: bind-chroot)
+
 - descubrir en /etc/default/lxc
 
 LXC_AUTO="true"
@@ -73,4 +86,33 @@ Como en lxc normal, agregar una shared data
                         echo "#lxc.mount.entry                        = /srv/${_NAME} ${_ROOTFS}/srv/${_NAME} none defaults,bind 0 0" >> "${_PATH}/config"
                 fi
         fi
+
+== LXC application Containers ==
+
+* running "sleep" for 100 seconds in a container named "guest"
+
+lxc-execute -n guest -- sleep 100
+
+* configuration for application containers:
+
+lxc.utsname = guest
+lxc.tty = 1
+lxc.pts = 1
+lxc.rootfs = /tmp/guest/rootfs
+lxc.mount.entry=/lib /tmp/guest/rootfs/lib none ro,bind 0 0
+lxc.mount.entry=/usr/libexec /tmp/guest/rootfs/usr/lib none ro,bind 0 0
+lxc.mount.entry=/lib64 /tmp/guest/rootfs/lib64 none ro,bind 0 0
+lxc.mount.entry=/usr/lib64 /tmp/guest/rootfs/usr/lib64 none ro,bind 0 0
+lxc.mount.entry=/bin /tmp/guest/rootfs/bin none ro,bind 0 0
+lxc.mount.entry=/usr/bin /tmp/guest/rootfs/usr/bin none ro,bind 0 0
+lxc.cgroup.cpuset.cpus=1
+
+The mount entry for /usr/libexec is required so that the container can access /usr/libexec/lxc/lxc-init on the host system.
+
+You must also configure the required directories under the rootfs directory:
+
+[root@host ~]# TMPDIR=/tmp/guest/rootfs
+[root@host ~]# mkdir -p $TMPDIR/lib $TMPDIR/usr/lib $TMPDIR/lib64 $TMPDIR/usr/lib64 \
+$TMPDIR/bin $TMPDIR/usr/bin $TMPDIR/dev/pts $TMPDIR/dev/shm $TMPDIR/proc
+In this example, the directories include /dev/pts, /dev/shm, and /proc in addition to the mount point entries defined in the configuration file.
 

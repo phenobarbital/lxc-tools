@@ -113,7 +113,7 @@ VIMRC_EOF
 install_package bash-completion
 
 ## enable bash-completion
-sed -i '/^#if ! shopt -oq posix; then$/,+6s/#/ /' $ROOTFS/etc/bash.bashrc
+sed -i '/^#if ! shopt -oq posix; then$/,+6s/# / /' $ROOTFS/etc/bash.bashrc
 
 cat <<PROFILE_EOF >>$ROOTFS/etc/profile
 

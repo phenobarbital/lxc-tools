@@ -8,3 +8,9 @@ LXC-tools TODO list
 * Templates Ubuntu and Canaima
 * Multiple role option (ex --role sudo,shorewall,stub,webserver)
 * fole for Debian hardening (install psad,shorewall,portsentry,fail2ban)
+* crear un LXC a partir de una openvz template
+* crear un LXC-container a partir de una vps openvz (backup)
+* crear un LXC-application-container
+* crear un lxc-container a partir de un debootstrap (ubuntu, canaima)
+* crear un contenedor Fedora, CentOS
+* Crear rol para un application-container (ej: bind-chroot)
