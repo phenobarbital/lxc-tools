@@ -6,7 +6,7 @@
 #
 ##
 
-VERSION='0.2'
+VERSION='0.3'
 
 function get_version() 
 {
@@ -188,37 +188,51 @@ function cgroup_enabled()
 # install a package into chroot
 function install_package()
 {
-	# get distribution
-	#dist=`get_distribution`
-	if [ "$DIST" = "Debian" ]; then
-		message "installing Debian package $@"
-		#
-		# Install the packages
-		#
-		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
-	elif [ "$dist" = "Centos" ]; then
-		message "installing Centos package $@"
-		/usr/bin/yum -y --assume-yes install "$@"
-	else
-		error "unknown package manager for $DIST"
-		return 1
+	# get distribution if $DIST its not defined
+	if [ -z "$DIST" ]; then
+		dist=`get_distribution`
 	fi
-	# TODO: other distro versions
+	case "$DIST" in
+		"debian"|"Debian"|"DEBIAN")
+				message "installing Debian package $@"
+				#
+				# Install the packages
+				#
+				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
+				;;
+		"centos"|"Centos"|"CENTOS"|"CentOS")
+				message "installing Centos package $@"
+				/usr/bin/yum -y --assume-yes install "$@"
+				;;			
+		*)
+				error "unknown package manager for $DIST"
+				return 1
+				;;
+	esac
 }
 
 function remove_package()
 {
-	# get distribution
-	# dist=`get_distribution`
-	if [ "$DIST" = "Debian" ]; then
-		message "remove Debian package $@"
-		DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
-	elif [ "$dist" = "Centos" ]; then
-		message "remove Centos package $@"
-		/usr/bin/yum -y --assume-yes erase "$@"
-	else
-		error "unknown package manager for $DIST"
-		return 1
+	# get distribution if $DIST its not defined
+	if [ -z "$DIST" ]; then
+		dist=`get_distribution`
 	fi
+	case "$DIST" in
+		"debian"|"Debian"|"DEBIAN")
+				message "remove Debian package $@"
+				#
+				# Install the packages
+				#
+				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
+				;;
+		"centos"|"Centos"|"CENTOS"|"CentOS")
+				message "remove Centos package $@"
+				/usr/bin/yum -y --assume-yes erase "$@"
+				;;			
+		*)
+				error "unknown package manager for $DIST"
+				return 1
+				;;
+	esac
 	# TODO: other distro versions
 }

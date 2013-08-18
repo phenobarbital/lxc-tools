@@ -352,7 +352,7 @@ lxc.mount.entry                         = proc $ROOTFS/proc proc nodev,noexec,no
 lxc.mount.entry                         = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                         = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
 lxc.mount.entry							= tmpfs $ROOTFS/var/run tmpfs defaults 0 0
-# lxc.mount.entry							= tmpfs $ROOTFS/dev/shm tmpfs nosuid,nodev    0 0
+lxc.mount.entry						    = tmpfs $ROOTFS/dev/shm tmpfs nosuid,nodev    0 0
 EOF
     if [ $? -ne 0 ]; then
         error "$(basename $0) Failed to add configuration"
