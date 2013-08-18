@@ -1,0 +1,286 @@
+== LXC ==
+
+* Configurar red (ver: openvswitch en Debian)
+
+* instalar dependencias de LXC
+
+aptitude install libvirt-bin debootstrap
+
+* instalar lxc:
+
+aptitude install lxc
+
+Directorio de LXC: /srv/lxc
+
+* configurar fstab:
+
+cat <<EOF >> /etc/fstab
+# cgroups
+cgroup  /sys/fs/cgroup  cgroup  defaults  0   0
+EOF
+
+mount -a
+
+* y verificar que ha sido creado cgroup:
+
+root@prozac:~# ls /sys/fs/cgroup/
+blkio.io_merged		blkio.reset_stats      cgroup.event_control  cpuset.cpus		     cpuset.memory_spread_page	      devices.allow	 tasks
+blkio.io_queued		blkio.sectors	       cgroup.procs	     cpuset.mem_exclusive	     cpuset.memory_spread_slab	      devices.deny
+blkio.io_service_bytes	blkio.time	       cpuacct.stat	     cpuset.mem_hardwall	     cpuset.mems		      devices.list
+blkio.io_serviced	blkio.weight	       cpuacct.usage	     cpuset.memory_migrate	     cpuset.sched_load_balance	      net_cls.classid
+blkio.io_service_time	blkio.weight_device    cpuacct.usage_percpu  cpuset.memory_pressure	     cpuset.sched_relax_domain_level  notify_on_release
+blkio.io_wait_time	cgroup.clone_children  cpuset.cpu_exclusive  cpuset.memory_pressure_enabled  cpu.shares			      release_agent
+
+* Habilitamos el control de memoria y swap en cgroups:
+
+sed -ie "s/.*GRUB_CMDLINE_LINUX=\"\(.*\)\"/GRUB_CMDLINE_LINUX=\"\1 cgroup_enable=memory swapaccount=1\"/" /etc/default/grub
+
+* actualizar grub
+update-grub
+
+* y reiniciar
+reboot
+
+-- Al iniciar, verificamos LXC con el comando:
+
+lxc-checkconfig
+
+y vermos algo como esto:
+
+(imagen)
+
+Además, verificar que requisitos (como cpuset o memory) han sido habilitados en cgroup:
+
+grep cgroup /proc/self/mounts
+cgroup /sys/fs/cgroup cgroup rw,relatime,perf_event,blkio,net_cls,freezer,devices,memory,cpuacct,cpu,cpuset 0 0
+
+* además, verificamos la versión en Debian Wheezy:
+
+lxc-version 
+lxc version: 0.8.0-rc1
+
+Listo!, ya puedes hacer uso LXC.
+
+== Creando contenedores ==
+
+LXC puede operar con contenedores en 3 "backends" distintos, un simple directorio, un sub-volumen BTRFS ó un volumen lógico LVM, explicaremos los 3.
+
+Como se explica en este "bug" > http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=716839 hay problemas para crear contenedores en Debian Wheezy usando las plantillas incorporadas (sobre todo sshd y la plantilla Debian).
+
+En mi caso, uso lxc-tools (https://github.com/phenobarbital/lxc-tools) un conjunto de scripts que explicaré más adelante, mientras tanto, practiquemos un poco de LXC.
+
+== Sistema de Archivos ==
+
+Lo bueno de los contenedores es que no requieren GRUB, por lo que podemos crearlos en una partición formateada con XFS (o un sub-volumen -zvol- ZFS si se cuenta con un volumen ZFS), o incluso como veremos más adelante, como sub-volumenes de BTRFS.
+
+* Particion para LXC:
+
+* crear el volumen lógico que vamos a montar (10GB)
+Nota: mi grupo de volumen se llama VGDEV
+
+lvcreate -L10G -n lxc vgdev
+
+* formatear óptimamente con LXC
+mkfs.xfs  -l internal,lazy-count=1 -b size=4096 -d sunit=8,swidth=16 -f -L lxc /dev/vgdev/lxc
+
+* Y montar en la partición dónde irán los contenedores LXC:
+/dev/vgdev/lxc /srv/lxc xfs rw,noatime,nodiratime,attr2,nobarrier,logbufs=8,sunit=8,swidth=16,logbsize=256k,largeio,inode64,swalloc,noquota,allocsize=16M 0 0
+
+mount -a
+
+Ya tenemos una partición para crear contenedores con el Backend (-B) "none" (sistema de archivos).
+
+* Creamos un contenedor "de ejemplo"
+lxc-create -t debian -n test
+
+'Debian' template installed
+'test' created
+
+Esto, crea el contenedor en el directorio:
+/srv/lxc/test
+
+Allí, tenemos un archivo "config" (la configuración del contenedor) y el directorio "rootfs" (el sistema de archivos del contenedor):
+
+* Para iniciarlo:
+
+lxc-start -n test -f /srv/lxc/test/config -d
+
+* verificamos si ha iniciado correctamente:
+
+root@prozac:/srv/lxc# lxc-list
+RUNNING
+  test
+
+FROZEN
+
+STOPPED
+
+* Y la información del contenedor (PID del proceso):
+
+lxc-info -n test
+state:   RUNNING
+pid:     14751
+
+y nos conectamos a la consola (tty1) así:
+
+lxc-console -n test -t 1
+
+Nota: para salir de una consola en LXC, presione CTRL -*tecla CONTROL*-+a y luego la letra "q" (CTRL+a q)
+
+Detenemos:
+lxc-stop -n test
+
+Luego, para eliminar el contenedor, simplemente ejecutamos:
+
+lxc-destroy -n ssh1
+
+== LVM ==
+
+Si tenemos configurado LVM, podemos crear contenedores dentro de un volumen lógico LVM
+
+lxc-create -t debian -n testlvm -B lvm --vgname vgdev --fssize 2G --fstype xfs
+
+Con este comando:
+- creas un contenedor basado en Debian (-t = template)
+- de nombre "demo" (-n = name)
+- de Backend LVM (-B = backend)
+
+Las opciones indican que será creado en el grupo de volumen "vgdev" en un volumen lógico de 2GB, formateado XFS.
+
+Realizará algunas preguntas, como la versión de Debian (wheezy), la arquitectura (amd64), el repositorio por defecto (ej: http://http.debian.net/debian), la clave de root y una lista opcional de paquetes.
+
+Como detalle adicional, el contenedor no iniciará "a la primera", sino que aparecerá este error:
+
+lxc-start -n testlvm -f /srv/lxc/testlvm/config
+
+lxc-start: No such file or directory - failed to mount a new instance of '/dev/pts'
+lxc-start: failed to setup the new pts instance
+lxc-start: failed to setup the container
+lxc-start: invalid sequence number 1. expected 2
+lxc-start: failed to spawn 'testlvm'
+lxc-start: Device or resource busy - failed to remove cgroup '/sys/fs/cgroup//lxc/testlvm'
+
+Esto es debido a la ausencia de "/dev/pts" en la plantilla Debian (¿recuerdan el bug?); para corregir este detalle, abrir el archivo:
+archivo: /srv/lxc/testlvm/config
+
+Se cambia de esto:
+## Filesystem
+lxc.mount.entry                         = proc /var/lib/lxc/testlvm/rootfs/proc proc nodev,noexec,nosuid 0 0
+lxc.mount.entry                         = sysfs /var/lib/lxc/testlvm/rootfs/sys sysfs defaults,ro 0 0
+#lxc.mount.entry                        = /srv/testlvm /var/lib/lxc/testlvm/rootfs/srv/testlvm none defaults,bind 0 0
+lxc.rootfs = /dev/vgdev/testlvm
+
+A esto:
+
+lxc.rootfs = /dev/vgdev/testlvm
+lxc.mount.entry                         = proc /srv/lxc/testlvm/rootfs/proc proc nodev,noexec,nosuid 0 0
+lxc.mount.entry                         = sysfs /srv/lxc/testlvm/rootfs/sys sysfs defaults,ro 0 0
+lxc.mount.entry                         = devpts /srv/lxc/testlvm/rootfs/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
+lxc.mount.entry				= tmpfs /srv/lxc/testlvm/rootfs/var/run tmpfs defaults 0 0
+
+cd /srv/lxc/
+
+* Montamos el recurso LVM temporalmente:
+mount /dev/vgdev/testlvm /srv/lxc/testlvm/rootfs
+
+vim testlvm/rootfs/wheezy_amd64/etc/fstab
+
+Y agregamos:
+
+devtmpfs dev devtmpfs defaults 0 0
+
+* Deshabilitamos selinux:
+echo 0 > testlvm/rootfs/wheezy_amd64/selinux/enforce
+
+* Nos movemos al directorio:
+cd /srv/lxc/testlvm/rootfs/wheezy_amd64
+
+* Y movemos todo a la raiz:
+mv * ../
+
+luego,
+
+cd ..
+
+Y podemos eliminar esa carpeta "wheezy_amd64"
+rm -fR wheezy_amd64
+
+* Y por fin ya podemos iniciar:
+
+lxc-start -n testlvm -f /srv/lxc/testlvm/config -d
+
+== BTRFS ==
+
+* instalar btrfs:
+
+aptitude install btrfs-tools
+
+* formatear un disco (en mi caso, una partición) con btrfs:
+
+mkfs.btrfs /dev/sda6
+
+fs created label (null) on /dev/sda6
+	nodesize 4096 leafsize 4096 sectorsize 4096 size 25.61GB
+Btrfs Btrfs v0.19
+
+btrfsck /dev/sda6
+
+checking extents
+checking fs roots
+checking root refs
+found 94208 bytes used err is 0
+total csum bytes: 0
+total tree bytes: 28672
+total fs tree bytes: 8192
+btree space waste bytes: 23126
+file data blocks allocated: 65536
+ referenced 65536
+Btrfs Btrfs v0.19
+
+btrfs filesystem show
+Label: none  uuid: d0afd897-207e-4d30-b188-bd3f402d4437
+	Total devices 1 FS bytes used 28.00KB
+	devid    1 size 25.61GB used 2.04GB path /dev/sda6
+
+Btrfs Btrfs v0.19
+
+* Incluso, podríamos crear un sistema RAID1 con tolerancia a fallos:
+
+mkfs.btrfs -d raid1 -m raid1 /dev/sdc /dev/sdd
+
+(-d raid1 para datos, -m raid1 para metadatos)
+
+- Creando un sub-volumen
+
+Montamos en una ubicación el volumen btrfs
+
+* creamos el directorio de montaje y montamos:
+mkdir /lxc
+mount /dev/sda6 /lxc
+
+btrfs subvolume create /lxc/base-debian
+
+Create subvolume '/lxc/base-debian'
+
+* El sub-volumen se verá, como un subdirectorio:
+
+ls /lxc/
+base-debian
+
+* chequeamos:
+
+btrfs subvolume list /lxc/
+ID 257 top level 5 path base-debian
+
+* Y creamos un contenedor de tipo "debian" acá:
+
+/usr/share/lxc/templates/lxc-debian -p /lxc/base-debian
+
+* Y ya podemos iniciar:
+
+lxc-start -n base-debian -f /lxc/base-debian/config
+
+Lo interesante de btrfs, es la posibilidad de crear "clones" y "snapshots", lo cual, veremos en próxima entrega.
+
+Conclusiones
+
