@@ -22,42 +22,46 @@
 ##
 
 # get firt available bridge
-function get_bridge() {
-	brctl show | tail -n +2 | head -n1 | awk '{print $1}'
+get_bridge() {
+	bridge=`brctl show | tail -n +2 | head -n1 | awk '{print $1}'`
+	if [ -z "$bridge" ]; then
+			echo "error: cannot configure network, missing configure bridge"
+			return 1
+	fi
+	echo $bridge
 }
 
 # get ip from interface
-function get_ip() {
+get_ip() {
 	# get ip info
 	IP=`ip addr show $1 | grep "[\t]*inet " | head -n1 | awk '{print $2}' | cut -d'/' -f1`
 	if [ -z "$IP" ]; then
-		echo "ip error: interface not configured"
-		exit 1
+		echo ''
 	else
 		echo $IP
 	fi
 }
 
 # get netmask from IP
-function get_netmask() {
+get_netmask() {
 	ifconfig $1 | sed -rn '2s/ .*:(.*)$/\1/p'
 }
 
 # get network from ip and netmask
-function get_network() {
+get_network() {
 	IFS=. read -r i1 i2 i3 i4 <<< "$1"
 	IFS=. read -r m1 m2 m3 m4 <<< "$2"
 	printf "%d.%d.%d.%d\n" "$((i1 & m1))" "$(($i2 & m2))" "$((i3 & m3))" "$((i4 & m4))"
 }
 
 # get broadcast from interface
-function get_broadcast() {
+get_broadcast() {
 	# get ip info
 	ip addr show $1 | grep "[\t]*inet " | head -n1 | egrep -o 'brd (.*) scope' | awk '{print $2}'
 }
 
 # get subnet octect
-function mask2cidr() {
+mask2cidr() {
     nbits=0
     IFS=.
     for dec in $1 ; do
@@ -77,7 +81,7 @@ function mask2cidr() {
     echo "$nbits"
 }
 
-function get_subnet() {
+get_subnet() {
 	MASK=`get_netmask`
 	echo $(mask2cidr $MASK)
 }

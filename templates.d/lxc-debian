@@ -26,25 +26,29 @@
 
 download_debian() 
 {
-    
-    mkdir -p "$CACHE/$SUITE/partial-$ARCH"
+	if [ "$ARCH" = 'x86_64' ]; then
+		arch='amd64'
+	else
+		arch='i386'
+	fi	
+    mkdir -p "$CACHE/$SUITE/partial-$arch"
     if [ $? -ne 0 ]; then
-       	error "Failed to create '$CACHE/$SUITE/partial-$ARCH' directory"
+       	error "Failed to create '$CACHE/$SUITE/partial-$arch' directory"
        	return 1
     fi
     # download a mini debian into a cache
     message "Downloading Debian minimal ..."
-    debootstrap --verbose --variant=$VARIANT --arch=$ARCH --include $EXTRA_PACKAGES \
-        $SUITE $CACHE/$SUITE/partial-$ARCH $MIRROR
+    debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES \
+        $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
     RESULT=$?
 
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
-       rm -fR "$CACHE/$SUITE/partial-$ARCH"
+       rm -fR "$CACHE/$SUITE/partial-$arch"
        exit 1
     fi
 
-    mv "$CACHE/$SUITE/partial-$ARCH" "$CACHE/$SUITE/rootfs-$ARCH"
+    mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
     info "\nDownload $DIST $SUITE complete.\n"
 
     return 0
@@ -53,8 +57,13 @@ download_debian()
 copy_debian()
 {
 	# make a local copy of the minidebian
+	if [ "$ARCH" = 'x86_64' ]; then
+		arch='amd64'
+	else
+		arch='i386'
+	fi	
     info "Copying rootfs to $ROOTFS..."
-    cp -apr $CACHE/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
+    cp -apr $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
         exit 1
@@ -71,16 +80,22 @@ install_debian()
             error "Cache repository is busy."
             exit 1
         fi
+        
+		if [ "$ARCH" = 'x86_64' ]; then
+			arch='amd64'
+		else
+			arch='i386'
+		fi	        
 		
         # cleaning cache of mini debian
         if [ "$CLEAN_CACHE" -eq "1" ]; then
-			message "Cache found in $CACHE/$SUITE/rootfs-$ARCH. clearing ..."
-			rm -fR $CACHE/$SUITE/rootfs-$ARCH
+			message "Cache found in $CACHE/$SUITE/rootfs-$arch. clearing ..."
+			rm -fR $CACHE/$SUITE/rootfs-$arch
         fi
         
         # check the mini debian was not already downloaded
-        message "Checking cache download in $CACHE/$SUITE/rootfs-$ARCH ... "
-        if [ ! -e "$CACHE/$SUITE/rootfs-$ARCH" ]; then
+        message "Checking cache download in $CACHE/$SUITE/rootfs-$arch ... "
+        if [ ! -e "$CACHE/$SUITE/rootfs-$arch" ]; then
             download_debian
             if [ $? -ne 0 ]; then
                 error "Failed to download 'Debian Base'"

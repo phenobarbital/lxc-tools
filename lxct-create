@@ -46,7 +46,7 @@ SIZE=''
 IP=''
 IFACE=''
 NET_OPTIONS=''
-VLAN_ID='1234'
+VLAN_ID=''
 DIST=''
 TEMPLATE=''
 ROLE=''
@@ -57,7 +57,7 @@ CLEAN_CACHE=0
 usage() {
 	echo "Usage: $(basename $0) [-n|--name=<container_name>]
         [-t|--template=<template-name>] [-c|--clean] [-r|--role=<role-name>] [-A|--arch=<arch of the container>]
-        [-B|--backend=<dir|LVM|btrfs>] [--dhcp|--ip=<ip>] [-h|--help]"  
+        [-B|--backend=<dir|lvm|btrfs>] [--dhcp|--ip=<ip>] [--domain=DOMAIN] [-h|--help]"  
     return 0
 }
 
@@ -79,10 +79,12 @@ Options:
   -s, --size                 if LVM or btrfs, volume size
   -f, --fs                   if LVM, set filesystem format (ext4, xfs, btrfs)
   -l, --lvm                  set the LVM volume group name for container creation
-  --net                  specify network option (veth, macvlan, vlan, empty)
+  -D, --domain			     define Domain Name
+  --net                      specify network option (veth, macvlan, vlan, empty)
   -i, --iface                if macvlan or vlan option, define interface name (ex: eth0)
   -v, --vlan                 if vlan is enabled, define vlan-id
-  -D, --debug                Enable debugging information
+  -A, --arch				 Hardware Architecture of Container (i386, x86_64)
+  --debug                    Enable debugging information
   --dhcp                     Container interface is in dhcp mode
   --ip                       IP Address of container
   Help options:
@@ -175,7 +177,7 @@ function get_network_info() {
 			if [ ! -z "$_IP_" ]; then
 				IP=$_IP_
 			else
-				error "$(basename $0) error: missing IP Address"
+				error "error: missing IP Address"
 				exit 1
 			fi
 		fi
@@ -223,7 +225,7 @@ EOF
 	'empty')
 		NET_OPTIONS='';;
 	'*')
-		error "$(basename $0) invalid network configuration"
+		error "invalid network configuration"
 		exit 1;;
 	esac
 }
@@ -480,6 +482,11 @@ while [ $# -gt 0 ]; do
             TEMPLATE=$1
             shift
             ;;
+        -A|--arch)
+            optarg_check $opt "$1"
+            ARCH=$1
+            shift
+            ;;
         -c|--clean)
             CLEAN_CACHE=1
             shift
@@ -493,7 +500,12 @@ while [ $# -gt 0 ]; do
             optarg_check $opt "$1"
             DIR=$1
             shift
-            ;;         
+            ;;
+        -D|--domain)
+            optarg_check $opt "$1"
+            DOMAIN=$1
+            shift
+            ;;              
         -l|--lvm)
             optarg_check $opt "$1"
             LVM=$1
@@ -544,7 +556,7 @@ while [ $# -gt 0 ]; do
             SUITE=$1
             shift
             ;;              
-        -D|--debug)
+        --debug)
             VERBOSE='true'
             shift
             ;;

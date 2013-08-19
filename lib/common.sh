@@ -8,7 +8,14 @@
 
 VERSION='0.3'
 
-function get_version() 
+export NORMAL='\033[0m'
+export RED='\033[1;31m'
+export GREEN='\033[1;32m'
+export YELLOW='\033[1;33m'
+export WHITE='\033[1;37m'
+export BLUE='\033[1;34m'
+
+get_version() 
 {
 	echo "LXC-tools version $VERSION";
 }
@@ -18,7 +25,7 @@ function get_version()
 
 #  If we're running verbosely show a message, otherwise swallow it.
 #
-function message()
+message()
 {
     message="$*"
 
@@ -27,19 +34,54 @@ function message()
     fi
 }
 
-function info()
+info()
 {
 	message="$*"
-
     if [ ! -z "$VERBOSE" ]; then
-        echo -e $message;
+		printf "$GREEN"
+		printf "%s\n"  "$message" >&2;
+		tput sgr0 # Reset to normal.
+		printf "$NORMAL"
     fi
 }
 
-function error()
+warning()
 {
 	message="$*"
-	echo -e $message >&2;
+    if [ ! -z "$VERBOSE" ]; then
+		printf "$YELLOW"
+		printf "%s\n"  "$message" >&2;
+		tput sgr0 # Reset to normal.
+		printf "$NORMAL"
+    fi
+}
+
+debug()
+{
+	message="$*"
+    if [ ! -z "$VERBOSE" ]; then
+		printf "$BLUE"
+		printf "%s\n"  "$message" >&2;
+		tput sgr0 # Reset to normal.
+		printf "$NORMAL"
+    fi
+}
+
+error()
+{
+	message="$*"
+	scriptname=$(basename $0)
+	printf "$RED"
+	printf "%s\n"  "$scriptname $message" >&2;
+	tput sgr0 # Reset to normal.
+	printf "$NORMAL"
+	return 1
+}
+
+usage_err()
+{
+	error "$*"
+	exit 1
 }
 
 optarg_check() 
@@ -49,7 +91,7 @@ optarg_check()
     fi
 }
 
-function templatedir()
+templatedir()
 {
 		if [ -d "/usr/share/lxc-tools/templates.d" ]; then
 			TEMPLATEDIR="/usr/share/lxc-tools/templates.d"
@@ -58,7 +100,7 @@ function templatedir()
 		fi
 }
 
-function roledir()
+roledir()
 {
 		if [ -d "/usr/share/lxc-tools/role.d" ]; then
 			ROLEDIR="/usr/share/lxc-tools/role.d"
@@ -67,7 +109,7 @@ function roledir()
 		fi
 }
 
-function get_lxcpath() 
+get_lxcpath() 
 {
 	if [ -e /etc/lxc/lxc.conf ]; then
 		# using config dir from lxc
@@ -78,25 +120,48 @@ function get_lxcpath()
 	fi
 }
 
-function get_domain() 
+# get hostname
+function get_hostname() {
+        if [ -z "$NAME" ]; then
+                echo -n "name of container? [ex: `hostname --short`] "
+                read _HOSTNAME_
+                if [ ! -z "$_HOSTNAME_" ]; then
+                    NAME=$_HOSTNAME_
+                elif [ -z "$NAME" ]; then
+                    error "error : missing container name, use -n|--name option"
+                    exit 1
+                fi
+        fi
+        HOSTNAME=$NAME.$DOMAIN
+}
+
+define_domain()
 {
-	_DOMAIN_=`hostname -d`
+	echo -n 'Please define a Domain name [ex: example.com]: '
+	read _DOMAIN_
 	if [ -z "$_DOMAIN_" ]; then
-				echo -n "Domain not defined, please define a domain [ex: example.com] "
-				read _DOMAIN_
-				if [ ! -z "$_DOMAIN_" ]; then
-					echo $_DOMAIN_
-				else
-					DOMAIN="example.com"
-				fi
+		message "error: Domain not defined"
+		return 1
 	else
-			#usamos el dominio configurado del host
-			echo $_DOMAIN_
+		DOMAIN=$_DOMAIN_
 	fi
 }
 
-# return distribution based on lsb-release
-function get_distribution() 
+get_domain() 
+{
+	if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "auto" ]; then
+		# auto-configure domain:
+		_DOMAIN_=`hostname -d`
+		if [ -z "$_DOMAIN_" ]; then
+			define_domain
+		else
+			DOMAIN=$_DOMAIN_
+		fi
+	fi
+}
+
+# return host distribution based on lsb-release
+get_distribution() 
 {
 	if [ -z $(which lsb_release) ]; then
 		echo "lxc-tools error: lsb-release is required"
@@ -106,7 +171,7 @@ function get_distribution()
 }
 
 # get codename (ex: wheezy)
-function get_suite() 
+get_suite() 
 {
 	if [ -z $(which lsb_release) ]; then
 		echo "lxc-tools error: lsb-release is required"
@@ -115,7 +180,7 @@ function get_suite()
 	lsb_release -s -c
 }
 
-function get_lxcversion() 
+get_lxcversion() 
 {
 	if [ `get_distribution` = "Debian" ]; then
 		dpkg-query -W -f='${Version}' lxc
@@ -124,21 +189,16 @@ function get_lxcversion()
 }
 
 # get architecture
-function get_arch() 
+get_arch() 
 {
-	if [ -z $(which lsb_release) ]; then
-		echo "lxc-tools error: lsb-release is required"
-		exit 1
+	if [ -z "$ARCH" ] || [ "$ARCH" = 'auto' ]; then
+		ARCH=`uname -m`
 	fi
-	if [ `get_distribution` = "Debian" ]; then
-		dpkg --print-architecture
-	else
-		uname -m
-	fi
+	echo $ARCH
 }
 
 # get repository name
-function get_suite_repository() 
+get_suite_repository() 
 {
 	dist=`get_distribution`
 	if [ "$dist" = "Debian" ]; then
@@ -150,28 +210,13 @@ function get_suite_repository()
 }
 
 # obtener el nombre del grupo de volumen LVM
-function get_lvm() 
+get_lvm() 
 {
 	# determinar el nombre del primer volumen lógico
     vgs | tail -n1 | awk '{print $1}'
 }
 
-function get_default_bridge() 
-{
-	if [ "$BRIDGE" = "auto" ]; then
-		# obtenemos la lista de interfaces activas
-		get_bridge
-	elif [ -z "$BRIDGE" ]; then
-			echo "error: cannot configure network, missing configure bridge"
-			exit 1
-	elif [ -z `cat /proc/net/dev | grep $BRIDGE` ]; then
-				echo "lxc-tools error: interface $BRIDGE not configured"
-	else
-		echo $BRIDGE
-	fi
-}
-
-function cgroup_enabled() 
+cgroup_enabled() 
 {
 		cgroup=`grep cgroup /proc/self/mounts`
 		if [ -z "$cgroup" ]; then
@@ -186,11 +231,11 @@ function cgroup_enabled()
 }
 
 # install a package into chroot
-function install_package()
+install_package()
 {
 	# get distribution if $DIST its not defined
 	if [ -z "$DIST" ]; then
-		dist=`get_distribution`
+		DIST=`get_distribution`
 	fi
 	case "$DIST" in
 		"debian"|"Debian"|"DEBIAN")
@@ -211,11 +256,11 @@ function install_package()
 	esac
 }
 
-function remove_package()
+remove_package()
 {
 	# get distribution if $DIST its not defined
 	if [ -z "$DIST" ]; then
-		dist=`get_distribution`
+		DIST=`get_distribution`
 	fi
 	case "$DIST" in
 		"debian"|"Debian"|"DEBIAN")
