@@ -128,17 +128,22 @@ if [ "$NET_TYPE" = "veth" ]; then
 		# obtenemos la lista de interfaces activas
 		BRIDGE=`get_bridge`
 	elif [ -z "$BRIDGE" ]; then
-			error "cannot configure network, missing configured bridge"
+			error "cannot configure network, missing a configured bridge"
 			exit 1
 	elif [ -z `cat /proc/net/dev | grep $BRIDGE` ]; then
-			error "interface $BRIDGE not configured"
+			error "unconfigured interface $BRIDGE"
 			exit 1
 	fi
-	# all network info
-	GATEWAY=$(get_ip $BRIDGE)
-	NETMASK=$(get_netmask $BRIDGE)
-	NETWORK=$(get_network $GATEWAY $NETMASK)
-	SUBNET=$(get_subnet $BRIDGE)
+	if [ ! -z "$BRIDGE" ]; then
+		# all network info
+		GATEWAY=$(get_ip $BRIDGE)
+		NETMASK=$(get_netmask $BRIDGE)
+		NETWORK=$(get_network $GATEWAY $NETMASK)
+		SUBNET=$(get_subnet $BRIDGE)
+	else
+		error "error: cannot configure network, missing a configured bridge"
+		exit 1
+	fi
 elif [ "$NET_TYPE" = "vlan" ] || [ "$NET_TYPE" = "macvlan" ]; then
 	if [ -z "$IFACE" ]; then
 		# si no esta configurada la interface
@@ -147,7 +152,7 @@ elif [ "$NET_TYPE" = "vlan" ] || [ "$NET_TYPE" = "macvlan" ]; then
 	fi
 	# all network info
 	if test GATEWAY=$(get_ip $IFACE); then
-		error "interface $IFACE not configured"
+		error "unconfigured interface $IFACE"
 		exit 1
 	else
 		NETMASK=$(get_netmask $IFACE)
@@ -162,7 +167,7 @@ elif [ "$NET_TYPE" = "phys" ]; then
 	fi
 fi
 
-# get distribution if $DIST its not defined
+# get distribution only if $DIST is not defined
 if [ -z "$DIST" ] || [ "$DIST" = 'auto' ]; then
 	DIST=`get_distribution`
 	if [ "$SUITE" = "auto" ]; then
@@ -173,6 +178,7 @@ if [ -z "$DIST" ] || [ "$DIST" = 'auto' ]; then
 	fi	
 fi
 
+# define default size, if $SIZE is not defined
 if [ -z "$SIZE" ]; then
 	SIZE=$DEFAULT_SIZE
 fi

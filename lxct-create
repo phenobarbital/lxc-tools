@@ -6,7 +6,7 @@
 # Version: 0.2    
 #
 #    Developed by Jesus Lara (phenobarbital) <jesuslara@phenobarbital.info>
-#    https://github.com/phenobarbital/mandarinalinux
+#    https://github.com/phenobarbital/lxc-tools
 #    
 #    This script is based on the lxc-debian example script that ships with lxc.
 #    Copyright (C) 2010 Nigel McNie

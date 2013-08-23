@@ -24,8 +24,9 @@
 # get firt available bridge
 get_bridge() {
 	bridge=`brctl show | tail -n +2 | head -n1 | awk '{print $1}'`
-	if [ -z "$bridge" ]; then
-			echo "error: cannot configure network, missing configure bridge"
+	if [ "$?" -ne "0" ]; then
+		exit 1
+	elif [ -z "$bridge" ]; then
 			return 1
 	fi
 	echo $bridge
