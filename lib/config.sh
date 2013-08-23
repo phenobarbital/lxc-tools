@@ -57,6 +57,7 @@ fi
 ### auto-configure variables
 LXC=`get_lxcversion`
 ARCH=`get_arch`
+CGROUP=`cgroup_enabled`
 
 # get network information
 get_network_info() {

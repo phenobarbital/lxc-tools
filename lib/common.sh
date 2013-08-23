@@ -180,6 +180,8 @@ get_suite()
 	lsb_release -s -c
 }
 
+# get lxc version
+# TODO: get version for Distribution
 get_lxcversion() 
 {
 	if [ `get_distribution` = "Debian" ]; then
@@ -198,9 +200,9 @@ get_arch()
 }
 
 # get repository name
+# TODO case ... esac for dist versions
 get_suite_repository() 
 {
-	dist=`get_distribution`
 	if [ "$dist" = "Debian" ]; then
 		suite=`get_suite`
 		grep -r "^deb http*" /etc/apt | grep "$suite main" | head -n1 | cut -d ' ' -f2

@@ -34,26 +34,24 @@ else
 fi
 
 #
-#  fill all "auto" variables
+#  fill all "auto" variables and check configuration
 #
-if [ -e /usr/lib/lxc-tools/build.sh ]; then
-    . /usr/lib/lxc-tools/build.sh
+if [ -e /usr/lib/lxc-tools/config.sh ]; then
+    . /usr/lib/lxc-tools/config.sh
 else
-    . ./lib/build.sh
+    . ./lib/config.sh
 fi
 
 # get general info about LXC
-# TODO: usar colored info
+# TODO: using colored info
 cat << _MSG
 
  ****************** [ LXC-tools General Information ] *******************
  *
  * LXC version : ................... $LXC
- * Config Dir :	.................... $DIR
  * Distribution : .................. $DIST
  * Suite : ......................... $SUITE
  * Arch : .......................... $ARCH
- * Domain : ........................ $DOMAIN
  * Bridge : ........................ $BRIDGE
  * Gateway : ....................... $GATEWAY
  * Netmask : ....................... $NETMASK
@@ -69,4 +67,3 @@ cat << _MSG
  
  ************************************************************************ 
 _MSG
-
