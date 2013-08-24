@@ -123,34 +123,3 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 PROFILE_EOF
-
-#
-#  Remove some standard packages and unwanted stuff
-#
-
-# PPP stuff.
-remove_package pppconfig
-remove_package pppoeconf
-remove_package pppoe
-remove_package ppp
-remove_package libpcap0.7
-
-# Editors
-remove_package nano
-remove_package ed
-remove_package nvi
-
-# Syslog
-remove_package klogd
-remove_package sysklogd
-
-# manpages
-remove_package manpages
-remove_package man-db
-remove_package info
-
-# misc
-remove_package tasksel tasksel-data
-remove_package pciutils
-remove_package fdutils
-remove_package cpio

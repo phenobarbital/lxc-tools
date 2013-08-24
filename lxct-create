@@ -90,6 +90,11 @@ execute_roles()
 }
 
 function create_lxc_config() {
+	if [ -z "$SECURE" ]; then
+		CAPABILITIES='sys_admin sys_module mac_admin mac_override sys_time sys_module sys_nice sys_tty_config'
+	else
+		CAPABILITIES='sys_admin audit_control audit_write fsetid ipc_lock ipc_owner lease linux_immutable mac_admin mac_override mknod setfcap setpcap sys_module sys_nice sys_pacct sys_ptrace sys_rawio sys_tty_config sys_time'
+	fi
 cat <<EOF > $CONFIGFILE
 # $CONFIGFILE
 
@@ -97,8 +102,8 @@ cat <<EOF > $CONFIGFILE
 lxc.utsname                             = $NAME
 lxc.rootfs                              = $ROOTFS
 lxc.arch                                = $ARCH
-lxc.console                             = /var/log/lxc/$NAME.console
-lxc.tty                                 = 4
+# lxc.console                             = /var/log/lxc/$NAME.console
+lxc.tty                                 = 2
 lxc.pts                                 = 1024
 
 ## network
@@ -107,10 +112,7 @@ lxc.network.flags                       = up
 $NET_OPTIONS
 
 ## Capabilities
-lxc.cap.drop                            = mac_admin
-lxc.cap.drop                            = mac_override
-lxc.cap.drop                            = sys_admin
-lxc.cap.drop                            = sys_module
+lxc.cap.drop                            = $CAPABILITIES
 
 ## Devices
 # Allow all devices
@@ -150,8 +152,7 @@ lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
-lxc.mount.entry                        = tmpfs $ROOTFS/var/run tmpfs defaults 0 0
-lxc.mount.entry                        = tmpfs $ROOTFS/dev/shm tmpfs nosuid,nodev    0 0
+lxc.mount.entry                        = tmpfs $ROOTFS/dev/shm tmpfs nodev,nosuid,noexec,mode=1777,rw 0 0
 EOF
     if [ $? -ne 0 ]; then
         error "Failed to add configuration"
@@ -319,6 +320,35 @@ check_directory()
 	fi
 }
 
+check_template()
+{
+	case "$1" in
+	"debian")
+		DIST='Debian'
+		TEMPLATE='debian'
+		;;
+	"ubuntu")
+		DIST='Ubuntu'
+		TEMPLATE='ubuntu'
+		;;	
+	"canaima")
+		DIST='Canaima'
+		TEMPLATE='canaima'
+		;;
+	"gentoo")
+		DIST='Gentoo'
+		TEMPLATE='gentoo'
+		;;
+	"archlinux")
+		DIST='Archlinux'
+		TEMPLATE='archlinux'
+		;;	
+	*)
+		usage_err "option '$1' invalid template option"
+		exit 1
+	esac
+}
+
 # processing arguments
 ARGS=`getopt -n$0 -u -a -o r:n:t:A:B:d:D:l:i:vf:s:h --longoptions packages:,net::,dhcp,ip::,dist::,suite::,debug,verbose,clean,version,help,size::,fs::,vlan::,iface::,lvm::,domain::,dir::,directory::,backend::,arch::,template::,role::,name:: -- "$@"`
 eval set -- "$ARGS"
@@ -337,8 +367,7 @@ while [ $# -gt 0 ]; do
             shift
             ;;
         -t|--template)
-            optarg_check $1 "$2"
-            TEMPLATE=$2
+            check_template "$2"
             shift
             ;;
         -r|--role)
@@ -415,6 +444,10 @@ while [ $# -gt 0 ]; do
             SUITE=$2
             shift
             ;;
+        --secure)
+			# creating a more secure container
+            SECURE='true'
+            ;;            
         --debug)
             VERBOSE='true'
             ;;

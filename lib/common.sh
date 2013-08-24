@@ -282,7 +282,6 @@ SUMMARY=$(cat << _MSG
   Config Dir :	................... $CONFIG
   RootFS : ........................ $ROOTFS
   Distribution : .................. $DIST
-  Suite : ......................... $SUITE
   Arch : .......................... $ARCH
   Domain : ........................ $DOMAIN
   Network Mode : .................. $NET_TYPE

@@ -1,15 +1,14 @@
 LXC-tools TODO list
 -------------------
 
-* Command save LXC-container as a template (tar.gz)
-* Add logging functionality (logging creation of containers) (ready)
+* Save LXC-container as a template (tar.gz)
 * Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
 * LVM creation functionality
 * BTRFS creation functionality
 * Templates Ubuntu and Canaima
-* Multiple role option (ex --role sudo,shorewall,stub,webserver) (ready)
 * role for Debian hardening (install psad,shorewall,portsentry,fail2ban)
+* various functional roles (ex: web server)
 * crear un LXC a partir de una openvz template
 * crear un LXC-container a partir de una vps openvz (backup)
 * crear un LXC-application-container

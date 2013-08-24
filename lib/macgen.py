@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-macgen.py script generates a MAC address for LXC guests
+macgen.py script generates a MAC address for Xen guests
 """
 import random
 mac = [ 0x00, 0x16, 0x3e,

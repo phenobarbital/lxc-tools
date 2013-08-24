@@ -115,6 +115,7 @@ get_network_info() {
 	else
 		MACADDR=`python ./lib/macgen.py`
 	fi
+	# MACADDR=`openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//'`
 	# get network type
 	case "$NET_TYPE" in
 	'veth')
