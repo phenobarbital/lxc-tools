@@ -1,0 +1,36 @@
+#!/bin/bash
+# 05-fix-init
+#
+# fix init system
+#
+
+# short-circuit openrc's autodetection
+sed 's/^#rc_sys=""/rc_sys="lxc"/g' -i "$ROOTFS/etc/rc.conf"
+echo 'rc_depend_strict="NO"' >> "$ROOTFS/etc/rc.conf"
+
+# fix for error caused by openrc <0.10.2 (~may 2012)
+rm "$ROOTFS/etc/runlevels/boot/termencoding" >/dev/null 2>&1
+
+# fix boot-time interface config wipe under aggressive cap drop
+# (openrc 0.9.8.4 ~sep 2012 - https://bugs.gentoo.org/show_bug.cgi?id=436266)
+sed -i -e 's/^#rc_nostop=""/rc_nostop="net.eth0 net.lo"/' "$ROOTFS/etc/rc.conf"
+
+# remove netmount from default runlevel (openrc leaves it in)
+rm "$ROOTFS/etc/runlevels/default/netmount"
+
+# remove urandom from boot runlevel (openrc<0.11 leaves it in ~sep 2012)
+# https://bugs.gentoo.org/show_bug.cgi?id=436270
+rm "$ROOTFS/etc/runlevels/boot/urandom"
+
+# remove net.lo from boot runlevel (~jan 2013; openrc-0.11.8)
+rm "$ROOTFS/etc/runlevels/boot/net.lo"
+
+	# unless we are using DHCP to configure the container, we now
+	# force openrc to automatic provision of the 'net' dep. this is
+	# avoided for DHCP as it would prohibit service start from waiting
+	# until the interface has been provided with an IP address, causing
+	# many daemon start issues such as failed binds / bad connectivity
+	# (~jan 2013)
+	#if [ "${IPV4}" != "dhcp" ]; then
+	#	echo 'rc_provide="net"' >> "$ROOTFS/etc/rc.conf"
+	#bfi

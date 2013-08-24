@@ -1,0 +1,12 @@
+#!/bin/bash
+# 10-configure-timezone
+#
+# This script configure timezone
+#
+
+# configurando zona horaria
+cp /etc/timezone $ROOTFS/etc/timezone
+cp /etc/localtime $ROOTFS/etc/localtime
+
+# configurando reloj local
+echo 'clock="local"' >> "$ROOTFS/etc/conf.d/hwclock"

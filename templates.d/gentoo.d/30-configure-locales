@@ -1,0 +1,28 @@
+#!/bin/bash
+# 30-configure-locales
+#
+# configure locales
+#
+
+#
+# Default to the same locale as the host.
+#
+if [ -e /etc/locale.gen ]; then
+   cp /etc/locale.gen $ROOTFS/etc
+else
+
+cat <<LOCALE >> $ROOTFS/etc/locale.gen
+en_US.UTF-8 UTF-8
+es_VE.UTF-8 UTF-8
+LOCALE
+
+fi
+
+cat <<LOCALE >> $ROOTFS/etc/env.d/02locale
+LANG="es_VE.UTF-8"
+LC_COLLATE="C"
+LOCALE
+
+# generating locales
+chroot $ROOTFS /usr/sbin/locale-gen
+
