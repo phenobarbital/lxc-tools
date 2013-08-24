@@ -170,7 +170,9 @@ setup_portage()
 	# configure portage
 	# making portage directories
 	mkdir -p "$ROOTFS/etc/portage"
-	mkdir -p "$ROOTFS/var/portage/{tmp,tree,logs,packages,distfiles}"
+	mkdir -p "$ROOTFS/var/portage"
+	mkdir -p "$ROOTFS/var/portage/tmp" && mkdir -p "$ROOTFS/var/portage/tree" && mkdir -p "$ROOTFS/var/portage/distfiles"
+	mkdir -p "$ROOTFS/var/portage/logs" && mkdir -p "$ROOTFS/var/portage/packages"
 	src="$ROOTFS/etc/portage/make.profile"
 	dest=$(readlink "$src")
 	dest="${dest##*../}"
@@ -203,17 +205,139 @@ EOF
 	return 0
 }
 
+## gentoo functions
+gentoo_inittab() {
+	inittab="$ROOTFS/etc/inittab"
+	sed -i 's/^c[1-9]/#&/' "$inittab" # disable getty
+	echo "# Lxc main console" >> "$inittab"
+	echo "1:12345:respawn:/sbin/agetty -a root --noclear 115200 console linux" >> "$inittab"
+	# we also blank out /etc/issue here in order to prevent delays spawning login
+	# caused by attempts to determine domainname on disconnected containers
+	rm "$ROOTFS/etc/issue" && touch "$ROOTFS/etc/issue"
+	# we also disable the /etc/init.d/termencoding script which can cause errors
+	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' "$ROOTFS/etc/init.d/termencoding"
+	# quiet login
+	touch "$ROOTFS/root/.hushlogin"
+	# finally we add a pf line to enable clean shutdown on SIGPWR (issue 60)
+	echo "# clean container shutdown on SIGPWR" >> "$inittab"
+	echo "pf:12345:powerwait:/sbin/halt" >> "$inittab"
+}
+
+gentoo_devices()
+{
+	DEV="$ROOTFS/dev"
+	# newer stage3 include too many useless nodes, remove them
+	rm -f "$DEV/hda*"
+	rm -f "$DEV/sda*"
+	rm -f "$DEV/sdb*"
+	rm -f "$DEV/sdc*"
+	rm -f "$DEV/sdd*"
+	rm -f "$DEV/tty*"
+	rm -f "$DEV/core"
+	rm -f "$DEV/mem"
+	rm -f "$DEV/port"
+	rm -rf "$DEV/input/"
+	
+	# mknod -m 666 ${dev_path}/tty c 5 0
+    for tty in $(seq 1 2); do
+	if [ ! -e $DEV/tty$tty ]; then
+	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
+	fi
+    done
+    mknod -m 600 initctl p
+	mknod -m 666 ptmx c 5 2
+	mkdir -m 755 pts
+	mkdir -m 1777 shm
+	mkdir -m 755 net
+	mknod -m 666 net/tun	c 10 200
+    rm -f ${dev_path}/null
+	mknod -m 666 ${dev_path}/null c 1 3
+	rm -f ${dev_path}/zero
+    mknod -m 666 ${dev_path}/zero c 1 5
+    rm -f ${dev_path}/random
+    mknod -m 666 ${dev_path}/random c 1 8
+    rm -f ${dev_path}/urandom
+    mknod -m 666 ${dev_path}/urandom c 1 9
+    rm -f ${dev_path}/console
+    mknod -m 600 ${dev_path}/console c 5 1
+    rm -f ${dev_path}/full
+    mknod -m 666 ${dev_path}/full c 1 7
+    # Mount pseudo-filesystems
+    mount -o bind /dev/pts "$ROOTFS/dev/pts"
+    mount -o bind /proc "$ROOTFS/proc"
+    mount -o bind /sys "$ROOTFS/sys"
+    # configure a minimal fstab for container
+cat <<EOF > $ROOTFS/etc/fstab
+/dev/root               /                       rootfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
+tmpfs                   /dev/shm                tmpfs    nosuid,nodev    0 0
+EOF
+   
+}
+
+gentoo_network()
+{
+
+if [ "$DHCP" = "y" ]; then
+
+cat <<EOF >> $ROOTFS/etc/conf.d/net
+config_$LAN_INTERFACE="dhcp"
+dns_domain_lo="$DOMAIN"
+EOF
+
+cat <<EOF >> $ROOTFS/etc/hosts
+# $HOSTNAME
+127.0.1.1 $HOSTNAME $NAME
+EOF
+
+else
+
+cat <<EOF >> $ROOTFS/etc/conf.d/net
+# interface $LAN_INTERFACE
+config_$LAN_INTERFACE="$IP netmask $NETMASK brd $BROADCAST"
+routes_$LAN_INTERFACE="default via $GATEWAY"
+EOF
+cat <<EOF >> $ROOTFS/etc/hosts
+# $HOSTNAME
+$IP	$HOSTNAME $NAME
+EOF
+fi
+# set interface start on boot
+ln -s $ROOTFS/etc/init.d/net.lo $ROOTFS/etc/init.d/net.eth0
+chroot $ROOTFS /sbin/rc-update add net.eth0 default
+
+# set the hostname
+echo $NAME > $ROOTFS/etc/hostname
+echo $HOSTNAME > $ROOTFS/etc/mailname
+printf "HOSTNAME=%s\n" "$NAME" > $ROOTFS/etc/conf.d/hostname
+}
+
 # configure basic options of gentoo container
 configure_gentoo()
 {
 	setup_portage
+	if [ $? -ne 0 ]; then
+		error "Failed to configure portage software"
+		exit 1
+	fi
+	gentoo_inittab
+	gentoo_devices
+	# configure network
+	gentoo_network
+	# running basic gentoo hooks
+	HOOKS="$TEMPLATEDIR/gentoo.d"
+	for f in $(find $HOOKS/* -maxdepth 1 -type f | sort --numeric-sort); do
+		. $f
+	done	
 	return 0
 }
 
-
-
 cleanup_gentoo()
 {
+    # Unmount pseudo-filesystems
+    umount "$ROOTFS/dev/pts"
+    umount "$ROOTFS/proc"
+    umount "$ROOTFS/sys"	
 	return 0
 }
 

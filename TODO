@@ -2,6 +2,7 @@ LXC-tools TODO list
 -------------------
 
 * Check if container exists (name, directory, etc)
+* Check directory name (check_name) using a regex
 * Save LXC-container as a template (tar.gz)
 * Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
