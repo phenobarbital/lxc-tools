@@ -63,7 +63,6 @@ copy_debian()
 		arch='i386'
 	fi	
     info "Copying rootfs to $ROOTFS..."
-    # cp -apr $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
     rsync -aqzpHSW $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
@@ -170,13 +169,17 @@ debian_devices()
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
 	fi
     done
+    rm -f ${dev_path}/null
 	mknod -m 666 ${dev_path}/null c 1 3
+	rm -f ${dev_path}/zero
     mknod -m 666 ${dev_path}/zero c 1 5
+    rm -f ${dev_path}/random
     mknod -m 666 ${dev_path}/random c 1 8
+    rm -f ${dev_path}/urandom
     mknod -m 666 ${dev_path}/urandom c 1 9
-    #mkdir -m 755 ${dev_path}/pts
-    #mkdir -m 1777 ${dev_path}/shm
+    rm -f ${dev_path}/console
     mknod -m 600 ${dev_path}/console c 5 1
+    rm -f ${dev_path}/full
     mknod -m 666 ${dev_path}/full c 1 7
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
@@ -184,7 +187,7 @@ debian_devices()
     mount -o bind /sys "$ROOTFS/sys"
 	# Bind mount systems apt cache
     mount -o bind /var/cache/apt/archives "$ROOTFS/var/cache/apt/archives"
-    # configure a minimal fstab
+    # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
 /dev/root               /                       rootfs   defaults        0 0
 devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0

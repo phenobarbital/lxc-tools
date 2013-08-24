@@ -82,10 +82,6 @@ else
 	fi
 fi
 
-### auto-configure variables
-LXC=`get_lxcversion`
-ARCH=`get_arch`
-
 # get network information
 get_network_info() {
 	debug "Using network type $NET_TYPE"
@@ -212,3 +208,6 @@ if [ -z "$SIZE" ]; then
 	SIZE=$DEFAULT_SIZE
 fi
 
+### auto-configure variables
+LXC=`get_lxcversion`
+ARCH=`get_arch`

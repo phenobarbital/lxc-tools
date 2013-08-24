@@ -196,7 +196,7 @@ get_lxcversion()
 # get architecture
 get_arch() 
 {
-	if [ -z "$ARCH" ] || [ "$ARCH" = 'auto' ]; then
+	if [[ -z "$ARCH" || "$ARCH" == 'auto' || -n "$ARCH" ]]; then
 		ARCH=`uname -m`
 	fi
 	echo $ARCH

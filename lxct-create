@@ -154,6 +154,11 @@ lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
 lxc.mount.entry                        = tmpfs $ROOTFS/dev/shm tmpfs nodev,nosuid,noexec,mode=1777,rw 0 0
 EOF
+if [ "$DIST" == 'gentoo' ]; then
+cat <<EOF > $CONFIGFILE
+lxc.mount.entry                        = portagetmp $ROOTFS/var/portage/tmp tmpfs rw,nosuid,nodev 0 0
+EOF
+fi
     if [ $? -ne 0 ]; then
         error "Failed to add configuration"
         return 1

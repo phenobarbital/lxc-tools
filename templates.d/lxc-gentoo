@@ -1,0 +1,241 @@
+#!/bin/bash
+##
+#  /usr/lib/lxc-tools/templates.d/lxc-gentoo
+#
+#  Build a gentoo container from stage3
+##
+#
+# gentoo install
+#
+# based on:
+# Walter Stanish https://github.com/globalcitizen/lxc-gentoo
+# Authors:
+# Jesus Lara <jesuslarag@phenobarbital.info>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+
+MIRROR="${MIRROR:-http://distfiles.gentoo.org}"
+STAGE3_TARBALL=""
+PORTAGE=""
+
+#TODO: select sub-variant (hardened, nomultilib)
+
+# download a stage3 gentoo tarball
+download_gentoo()
+{
+	if [ "$MIRROR" == 'auto' ]; then
+		MIRROR='http://distfiles.gentoo.org'
+	fi
+
+	if [ "$ARCH" == 'x86_64' ]; then
+		arch='amd64'
+	else
+		arch='x86'
+	fi
+	WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+
+    mkdir -p "$CACHE/$DIST/partial-$arch"
+    if [ $? -ne 0 ]; then
+       	error "Failed to create '$CACHE/$DIST/partial-$arch' directory"
+       	return 1
+    fi
+    # get stage3 URL
+    stage3url="$MIRROR/releases/${arch}/autobuilds"
+    stage3pathurl="$stage3url/latest-stage3-${arch}.txt"
+    
+    debug " - downloading and processing $stage3pathurl"
+    RESULT=$($WGET -qO- $stage3pathurl | tail -1)
+    if [ ! -z "$RESULT" ]; then
+		stage3path=$RESULT
+		# Download the actual stage3
+		info "Downloading Gentoo stage3 tarball"
+		stage3tarballurl="${stage3url}/${stage3path}"
+		stage3tarball=$(basename ${stage3path})
+	else
+		error "Failed to download latest stage3 archive, aborting."
+		rm -fR "$CACHE/$DIST/partial-$arch"
+		exit 1
+	fi
+	if [ -f "$CACHE/$DIST/partial-$arch/$stage3tarball" ]; then
+		# remove file
+		rm -f "$CACHE/$DIST/partial-$arch/$stage3tarball"
+	fi
+    wget --directory-prefix="$CACHE/$DIST/partial-$arch" $stage3tarballurl
+    RESULT=$?
+    if [ "$RESULT" != "0" ]; then
+       error "Failed to download the stage3 tarball from ${stage3tarballurl}, aborting."
+       rm -fR "$CACHE/$DIST/partial-$arch"
+       exit 1
+    fi
+
+    mv "$CACHE/$DIST/partial-$arch" "$CACHE/$DIST/rootfs-$arch"
+    STAGE3_TARBALL="$CACHE/$DIST/rootfs-$arch/${stage3tarball}"
+    info "Download $DIST Tarball $ARCH complete."
+
+    return 0
+}
+
+download_portage()
+{
+	if [ "$MIRROR" == 'auto' ]; then
+		MIRROR='http://distfiles.gentoo.org'
+	fi
+	portageurl="$MIRROR/snapshots/portage-latest.tar.bz2"
+	portagedest="$CACHE/$DIST/portage-latest.tar.bz2"
+
+	if [[ ! -f "$portagedest" ]]; then
+		info "Downloading Gentoo portage (software build database) snapshot..."
+		wget -O "$portagedest" "$portageurl"
+		if [ "$?" != "0" ]; then
+			error "Failed to download gentoo portage from ${portageurl}, aborting."
+			rm -fR "$portagedest"
+			return 1
+		fi
+	fi
+	# used by calling function
+	PORTAGE="$portagedest"
+}
+
+# copy gentoo cache to rootfs
+copy_gentoo()
+{
+	if [ -f "$STAGE3_TARBALL" ]; then
+		info "Copying gentoo stage3 tarball to $ROOTFS..."
+		tar -xpf "$STAGE3_TARBALL" -C "$ROOTFS"
+		if [ $? -ne 0 ]; then
+			error "Failed to copy rootfs"
+			exit 1
+		fi
+	fi
+	return 0
+}
+
+# create container from gentoo cache
+install_gentoo() 
+{
+
+    mkdir -p /var/lock/subsys/
+    (
+        flock -n -x 200
+        if [ $? -ne 0 ]; then
+            error "Cache repository is busy."
+            exit 1
+        fi
+        
+		if [ "$ARCH" == 'x86_64' ]; then
+			arch='amd64'
+		else
+			arch='x86'
+		fi
+        # cleaning cache
+        if [ "$CLEAN_CACHE" -eq "1" ]; then
+			message "Cache found in $CACHE/$DIST/rootfs-$arch. clearing ..."
+			rm -fR $CACHE/$DIST/rootfs-$arch
+        fi
+        # check if gentoo tarball or stage3 was not already downloaded
+        cache_file=($CACHE/$DIST/rootfs-$arch/stage3-*.tar.bz2)
+        message "Checking stage3 tarball download in $CACHE/$DIST/rootfs-$arch ... "
+        if [ ! -f ${cache_file[0]} ]; then
+            download_gentoo
+            if [ $? -ne 0 ]; then
+                error "Failed to download Gentoo Stage3"
+                exit 1
+            fi
+        else
+			# hay descargada una version
+			STAGE3_TARBALL=${cache_file[0]}
+        fi
+        
+        copy_gentoo
+        
+        return 0
+
+        ) 200>/var/lock/subsys/lxc
+
+    return $?
+}
+
+setup_portage()
+{
+	# configure portage
+	# making portage directories
+	mkdir -p "$ROOTFS/etc/portage"
+	mkdir -p "$ROOTFS/var/portage/{tmp,tree,logs,packages,distfiles}"
+	src="$ROOTFS/etc/portage/make.profile"
+	dest=$(readlink "$src")
+	dest="${dest##*../}"
+	dest="${dest//usr\/portage/var/portage/tree}"
+	dest="$ROOTFS/$dest"
+	# relocate profile symlink
+	ln -f -s "$dest" "$src" || return 1
+cat <<- EOF >> "$ROOTFS/etc/portage/make.conf"
+PORTAGE_TMPDIR="/var/portage/tmp"
+PORTDIR="/var/portage/tree"
+PORT_LOGDIR="/var/portage/logs"
+PKGDIR="/var/portage/packages"
+DISTDIR="/var/portage/distfiles"
+# enable this to store built binary packages
+FEATURES="\$FEATURES buildpkg"
+FEATURES="\$FEATURES compress-build-logs"
+FEATURES="\$FEATURES split-log"
+FEATURES="\$FEATURES split-elog"
+
+EOF
+	download_portage
+	if [ $? -ne 0 ]; then
+		error "Failed to download portage software"
+		exit 1
+	fi
+	# uncompress portage source
+	if [ -f "$PORTAGE" ]; then
+		tar -xp --strip-components 1 -C "$ROOTFS/var/portage/tree/" -f "$PORTAGE"
+	fi
+	return 0
+}
+
+# configure basic options of gentoo container
+configure_gentoo()
+{
+	setup_portage
+	return 0
+}
+
+
+
+cleanup_gentoo()
+{
+	return 0
+}
+
+create_container()
+{
+	info "= Creating a Gentoo-Based Stage3 LXC container ="
+	# create cache and download gentoo stage3
+	install_gentoo
+    if [ $? -ne 0 ]; then
+        error "Failed to install Gentoo Stage3 in container"
+		exit 1
+    fi	
+	debug "= Configure Gentoo-Based LXC container ="
+	# configure chroot
+	configure_gentoo
+	info "Gentoo LXC Container created"
+	return 0
+}
+
+cleanup_container()
+{
+	# cleanup
+	cleanup_gentoo
+	return 0
+}
