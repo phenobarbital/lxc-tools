@@ -157,7 +157,6 @@ EOF
 if [ "$DIST" == 'gentoo' ]; then
 cat <<EOF > $CONFIGFILE
 lxc.mount.entry                        = portagetmp $ROOTFS/var/portage/tmp tmpfs rw,nosuid,nodev 0 0
-lxc.mount.entry                        = run $ROOTFS/run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 EOF
 fi
     if [ $? -ne 0 ]; then
