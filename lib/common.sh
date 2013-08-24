@@ -28,43 +28,45 @@ get_version()
 message()
 {
     message="$*"
-
-    if [ ! -z "$VERBOSE" ]; then
-        echo $message >&2;
-    fi
+    echo -e $message >&2;
+    logMessage $message
 }
 
 info()
 {
 	message="$*"
-    if [ ! -z "$VERBOSE" ]; then
+    if [ "$VERBOSE" == "true" ]; then
 		printf "$GREEN"
 		printf "%s\n"  "$message" >&2;
 		tput sgr0 # Reset to normal.
-		printf "$NORMAL"
+		echo -e `printf "$NORMAL"`
     fi
+    logMessage $message
 }
 
 warning()
 {
 	message="$*"
-    if [ ! -z "$VERBOSE" ]; then
+    if [ "$VERBOSE" == "true" ]; then
 		printf "$YELLOW"
 		printf "%s\n"  "$message" >&2;
 		tput sgr0 # Reset to normal.
 		printf "$NORMAL"
     fi
+    logMessage 'WARN: ' $message
 }
 
 debug()
 {
 	message="$*"
-    if [ ! -z "$VERBOSE" ]; then
+	if [ "$VERBOSE" == "true" ]; then
+    # if [ ! -z "$VERBOSE" ] || [ "$VERBOSE" == "true" ]; then
 		printf "$BLUE"
 		printf "%s\n"  "$message" >&2;
 		tput sgr0 # Reset to normal.
 		printf "$NORMAL"
     fi
+    logMessage 'DEBUG: ' $message
 }
 
 error()
@@ -75,6 +77,7 @@ error()
 	printf "%s\n"  "$scriptname $message" >&2;
 	tput sgr0 # Reset to normal.
 	printf "$NORMAL"
+	logMessage 'ERROR: ' $message
 	return 1
 }
 
@@ -282,4 +285,49 @@ remove_package()
 				;;
 	esac
 	# TODO: other distro versions
+}
+
+show_summary()
+{
+
+SUMMARY=$(cat << _MSG
+ ---------- [ Summary options for $NAME ] ---------------------
+ 
+  Config Dir :	................... $CONFIG
+  RootFS : ........................ $ROOTFS
+  Distribution : .................. $DIST
+  Suite : ......................... $SUITE
+  Arch : .......................... $ARCH
+  Domain : ........................ $DOMAIN
+  Network Mode : .................. $NET_TYPE
+  Install Mode : .................. $BACKEND_METHOD
+  Gateway : ....................... $GATEWAY
+  Netmask : ....................... $NETMASK
+  Network : ....................... $NETWORK
+  Mac Address : ................... $MACADDR
+  Network : ....................... $NET
+ 
+ ---------------------------------------------------------------
+_MSG
+)
+
+echo "$SUMMARY"
+logData $SUMMARY
+}
+
+install_summary()
+{
+SUMMARY=$(cat << _MSG
+
+Installation Summary
+---------------------
+Hostname        :  $HOSTNAME
+Distribution    :  $DIST
+Network Mode    :  $NET_TYPE
+IP-Address      :  $IP
+Mac Address     :  $MACADDR
+
+_MSG
+)
+echo "$SUMMARY"
 }

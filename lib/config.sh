@@ -15,6 +15,23 @@ else
     . ./lib/netinfo.sh
 fi
 
+#
+#  library for logging facility
+#
+if [ -e /usr/lib/lxc-tools/logging.sh ]; then
+    . /usr/lib/lxc-tools/logging.sh
+else
+    . ./lib/logging.sh
+fi
+
+# Make sure we have a log directory
+if [ ! -d "$LOGDIR" ]; then
+	if [ "$VERBOSE" == 'true' ]; then
+		debug "creating log directory $LOGDIR"
+	fi
+	mkdir -p "$LOGDIR"
+fi
+
 # configure backend
 if [ -z "$BACKEND_METHOD" ]; then
 	# if not backend_method defined, dir is by default
@@ -80,6 +97,7 @@ get_network_info() {
     else
 		# use DHCP
 		NET="0.0.0.0/$SUBNET"
+		IP="DHCP"
 	fi
     # get mac-address
 	if [ -f /usr/lib/lxc-tools/macgen.py ]; then
