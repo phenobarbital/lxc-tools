@@ -1,5 +1,5 @@
 #!/bin/bash
-# 02-configure-timezone
+# 05-disable-hwclock
 #
 # This script disable hardware clock in container
 #
