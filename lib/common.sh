@@ -221,20 +221,6 @@ get_lvm()
     vgs | tail -n1 | awk '{print $1}'
 }
 
-cgroup_enabled() 
-{
-		cgroup=`grep cgroup /proc/self/mounts`
-		if [ -z "$cgroup" ]; then
-			echo "lxc-tools error: cgroups are not configured"
-			exit 1
-		fi
-		if [ -z `grep cgroup /proc/self/mounts | grep memory` ]; then
-			echo "lxc-tools error: cgroup memory not enabled, please add cgroup_enable=memory to grub boot"
-			exit 1
-		fi
-		return 0
-}
-
 # install a package into chroot
 install_package()
 {
@@ -312,7 +298,7 @@ _MSG
 )
 
 echo "$SUMMARY"
-logData $SUMMARY
+logData "$SUMMARY"
 }
 
 install_summary()
@@ -330,4 +316,5 @@ Mac Address     :  $MACADDR
 _MSG
 )
 echo "$SUMMARY"
+logData "$SUMMARY"
 }

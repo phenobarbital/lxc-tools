@@ -24,10 +24,21 @@ else
     . ./lib/logging.sh
 fi
 
+# verify if cgroup is enabled
+cgroup=`cat /proc/self/mounts | grep cgroup`
+if [ -z "$cgroup" ]; then
+	echo -e "lxc-tools error: cgroups are not configured"
+	exit 1
+	if [ -z `cat /proc/self/mounts | grep cgroup | grep memory` ]; then
+		echo -e "lxc-tools error: cgroup memory not enabled, please add cgroup_enable=memory to grub boot"
+		exit 1
+	fi
+fi
+		
 # Make sure we have a log directory
 if [ ! -d "$LOGDIR" ]; then
 	if [ "$VERBOSE" == 'true' ]; then
-		debug "creating log directory $LOGDIR"
+		echo "creating log directory $LOGDIR"
 	fi
 	mkdir -p "$LOGDIR"
 fi
@@ -74,7 +85,6 @@ fi
 ### auto-configure variables
 LXC=`get_lxcversion`
 ARCH=`get_arch`
-CGROUP=`cgroup_enabled`
 
 # get network information
 get_network_info() {
