@@ -15,7 +15,7 @@ echo ${SHADOWINFO} >> $ROOTFS/etc/shadow
 # define password for root account
 # TODO: random password
 message "======"
-info "\n Define root password for container\n"
+info " Define root password for container "
 message "======"
 PASS=''
 while /bin/true; do

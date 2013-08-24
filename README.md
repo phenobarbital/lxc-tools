@@ -21,10 +21,14 @@ Están basados en las ideas de los Debian xen-tools, que permiten mediante roles
 - lsb-release
 - curl
 - wget
+
+* Requerimientos para otros tipos de contenedores:
+
 - btrfs-tools (btrfs sub-volume containers)
 - lvm2 (lvm-based containers)
 
 * para construir contenedores CentOS se requiere adicionalmente:
+
 - yum
 - rpm
 

@@ -26,13 +26,6 @@ logging_file()
 	
 }
 
-# log a message
-# $1 level
-# $2 message
-#log {
-#    "`date` - ${1} - ${2}\n" >> $LOGFILE
-#}
-
 logData() 
 {
 	message="$*"

@@ -53,7 +53,7 @@ warning()
 		tput sgr0 # Reset to normal.
 		printf "$NORMAL"
     fi
-    logMessage 'WARN: ' $message
+    logMessage "WARN: $message"
 }
 
 debug()
@@ -66,7 +66,7 @@ debug()
 		tput sgr0 # Reset to normal.
 		printf "$NORMAL"
     fi
-    logMessage 'DEBUG: ' $message
+    logMessage "DEBUG: $message"
 }
 
 error()
@@ -77,7 +77,7 @@ error()
 	printf "%s\n"  "$scriptname $message" >&2;
 	tput sgr0 # Reset to normal.
 	printf "$NORMAL"
-	logMessage 'ERROR: ' $message
+	logMessage "ERROR:  $message"
 	return 1
 }
 

@@ -16,14 +16,6 @@ message "role stub starting"
 info "Running role in ${prefix}"
 
 #
-# install an example package
-#
-install_package git-core
-# configure git
-chroot ${prefix} /usr/bin/git config --global user.name "$NAME"
-chroot ${prefix} /usr/bin/git config --global user.email "root@$HOSTNAME"
-
-#
 #  Log our finish
 #
 message "role stub finished"

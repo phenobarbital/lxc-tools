@@ -1,13 +1,14 @@
 LXC-tools TODO list
 -------------------
 
-* Add logging functionality (logging creation of containers)
+* Command save LXC-container as a template (tar.gz)
+* Add logging functionality (logging creation of containers) (ready)
+* Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
 * LVM creation functionality
 * BTRFS creation functionality
-* First "usable" role script
 * Templates Ubuntu and Canaima
-* Multiple role option (ex --role sudo,shorewall,stub,webserver)
+* Multiple role option (ex --role sudo,shorewall,stub,webserver) (ready)
 * role for Debian hardening (install psad,shorewall,portsentry,fail2ban)
 * crear un LXC a partir de una openvz template
 * crear un LXC-container a partir de una vps openvz (backup)
@@ -15,5 +16,5 @@ LXC-tools TODO list
 * crear un lxc-container a partir de un debootstrap (ubuntu, canaima)
 * create a CentOS LXC-container (working on)
 * Crear rol para un application-container (ej: bind-chroot)
-* colored bash-messages (error and info functions) (listo)
-* use a more flexible getopt parse (o re-write in python)
+* colored bash-messages (error and info functions) (ready)
+* use a more flexible getopt parse (ready)
