@@ -125,7 +125,7 @@ download_centos()
     mount -o bind /dev $INSTALL_ROOT/dev/
     
     debug " - installing yum and rpm"
-	$YUM install -y rpm-build yum
+	$YUM install -y rpm rpm-build yum
     
 	# rebuild db
 	# chroot $INSTALL_ROOT rpm --rebuilddb
@@ -136,9 +136,10 @@ download_centos()
 	PKG_LIST="python rpm rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
 	
     # instalar desde dentro de la chroot, garantiza su instalacion
-    mv $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
+    cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
+    chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates update yum rpm python
     chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm-python rpm yum $PKG_LIST
     if [ $? -ne 0 ]; then
 		echo "Failed to download the rootfs, aborting."
