@@ -7,7 +7,15 @@
 # TODO automate get name
 
 
-chroot $ROOTFS /bin/rpm -iUvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+for trynumber in 1 2 3; do
+    [ $trynumber != 1 ] && echo "Trying again..."
+	chroot $ROOTFS /bin/rpm -iUvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+	if [ $? -ne 0 ]; then
+		echo "Failed to get a epel-release"
+        continue
+    fi
+    break
+done
 
 chroot $ROOTFS /usr/bin/yum -y update
 
