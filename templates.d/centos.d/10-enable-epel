@@ -7,7 +7,7 @@
 # TODO automate get name
 
 
-chroot $ROOTFS /usr/bin/rpm -Uvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+chroot $ROOTFS /bin/rpm -Uvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
 
 chroot $ROOTFS /usr/bin/yum update
 

@@ -271,7 +271,9 @@ centos_devices()
     mknod -m 666 $DEV/zero c 1 5
     mknod -m 666 $DEV/random c 1 8
     mknod -m 666 $DEV/urandom c 1 9
+    rm -f ${DEV}/pts
     mkdir -m 755 $DEV/pts
+    rm -f ${DEV}/shm
     mkdir -m 1777 $DEV/shm
     mknod -m 600 $DEV/console c 5 1
     mknod -m 666 $DEV/full c 1 7
@@ -279,7 +281,7 @@ centos_devices()
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
-    mount -o bind /sys "$ROOTFS/sys"    
+    mount -o bind /sys "$ROOTFS/sys" 
 # configure a minimal fstab
 cat <<EOF > $ROOTFS/etc/fstab
 /dev/root               /                       rootfs   defaults        0 0
@@ -331,9 +333,9 @@ centos_cleanup()
 	#
 	chroot $ROOTFS /usr/bin/yum clean all
     # Unmount pseudo-filesystems
-    umount "$ROOTFS/dev/pts"
-    umount "$ROOTFS/proc"
-    umount "$ROOTFS/sys"	
+    umount -f $ROOTFS/dev/pts
+    umount -f $ROOTFS/proc
+    umount -f $ROOTFS/sys	
 }
 
 create_container()
