@@ -7,9 +7,9 @@
 # TODO automate get name
 
 
-chroot $ROOTFS /bin/rpm -Uvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+chroot $ROOTFS /bin/rpm -iUvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
 
-chroot $ROOTFS /usr/bin/yum update
+chroot $ROOTFS /usr/bin/yum -y update
 
 # === basic packages
 install_package lsof rsync screen htop bind-utils sysstat wget nc
