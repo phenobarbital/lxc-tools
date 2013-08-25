@@ -97,11 +97,13 @@ download_centos()
     if [ $DOWNLOAD_OK != yes ]; then
         return 1
     fi
-	
+
+	# make yum cache
+    $YUM makecache
+	info "Yum cache metadata created"
+		
 	# install centos-release
     $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
-	$YUM makecache
-	info "Yum cache metadata created"
 	
 	# download and install base system
 	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
@@ -110,18 +112,17 @@ download_centos()
 	# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
 	for pkg in $PKG_MIRROR; do
 		PACKAGE=${MIRROR_URL}Packages/$pkg
+		debug " - downloading $pkg"
 		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
 		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
 	done
-	#$RPM --nodeps -ivh $YUM_CACHE/setup-*.noarch.rpm $YUM_CACHE/filesystem-*.rpm $YUM_CACHE/basesystem-*.noarch.rpm $YUM_CACHE/ca-certificates-*.noarch.rpm \
-    # $YUM_CACHE/tzdata-*.noarch.rpm $YUM_CACHE/rootfiles-*.noarch.rpm $YUM_CACHE/filesystem-*.rpm $YUM_CACHE/hwdata-*.noarch.rpm
-    	
+
+	# install all downloaded packages
 	$RPM -ivh --nodeps $YUM_CACHE/*.rpm
 	
     # Mount /dev (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
     mount -o bind /dev $INSTALL_ROOT/dev/
-    	
     
     debug " - installing yum and rpm"
 	$YUM install -y rpm-build yum
@@ -144,18 +145,24 @@ download_centos()
 		return 1
     fi
     
+    # clean cache
+    chroot $ROOTFS yum clean all
+    chroot $INSTALL_ROOT rm -f /var/lib/rpm/__*
+    
     # umount dev
     umount -f $INSTALL_ROOT/dev/
-    
-    
-    return 1
+
+	mv "$INSTALL_ROOT" "$CACHE/$DIST/$SUITE/rootfs-$ARCH"
+    info "Download $DIST $SUITE complete."
+ 
+    return 0    
 }
 
 # make a local copy of the mini centos
 copy_centos()
 {
     info "Copying rootfs to $ROOTFS..."
-    cp -apr $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE/* $ROOTFS/ || return 1
+    cp -apr $CACHE/$DIST/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
         exit 1
@@ -335,7 +342,7 @@ create_container()
        exit 1
     fi	
 	# configure chroot
-	#configure_centos
+	configure_centos
     if [ $? -ne 0 ]; then
        error "Failed to configure centos container"
        exit 1
