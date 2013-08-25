@@ -1,0 +1,15 @@
+#!/bin/bash
+# 10-enable-epel
+#
+# add epel repository
+#
+
+# TODO automate get name
+
+
+chroot $ROOTFS /usr/bin/rpm -Uvh "http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+
+chroot $ROOTFS /usr/bin/yum update
+
+# === basic packages
+install_package lsof rsync screen htop bind-utils sysstat wget nc

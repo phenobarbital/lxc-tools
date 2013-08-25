@@ -33,6 +33,8 @@ RELEASE='6-4.el6.centos.10'
 RELEASE_FILE=''
 MIRROR_URL=''
 
+#TODO: usable inittab
+
 download_centos()
 {
 	INSTALL_ROOT="$CACHE/$DIST/$SUITE/partial-$ARCH"
@@ -142,6 +144,7 @@ download_centos()
     # chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates update yum rpm python
     chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm-python rpm yum $PKG_LIST
     if [ $? -ne 0 ]; then
+		umount -f $INSTALL_ROOT/dev/
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi
