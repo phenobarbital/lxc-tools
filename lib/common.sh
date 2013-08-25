@@ -261,7 +261,7 @@ remove_package()
 				#
 				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
 				;;
-		"centos"|"Centos"|"CENTOS"|"CentOS"|)
+		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "remove Centos package $@"
 				/usr/bin/yum -y erase "$@"
 				;;			
