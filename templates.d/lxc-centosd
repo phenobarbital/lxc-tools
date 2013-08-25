@@ -10,6 +10,7 @@
 # based on:
 # Daniel Lezcano <daniel.lezcano@free.fr>
 # Ramez Hanna <rhanna@informatiq.org>
+#
 # Authors:
 # Jesus Lara <jesuslarag@phenobarbital.info>
 #
@@ -27,13 +28,22 @@
 
 # re-define options
 DIST='centos'
-RELEASE='6'
-VERSION='6-4.el6.centos.10'
-
+SUITE='6'
+RELEASE='6-4.el6.centos.10'
+RELEASE_FILE=''
+MIRROR_URL=''
 
 download_centos()
 {
-	INSTALL_ROOT="$CACHE/$DIST/$RELEASE/partial-$ARCHITECTURE"
+	INSTALL_ROOT="$CACHE/$DIST/$SUITE/partial-$ARCH"
+	echo $INSTALL_ROOT
+	
+	WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
+	YUM="yum --disablerepo=updates --enablerepo=base --installroot=$INSTALL_ROOT -y --nogpgcheck"
+	YUM_CACHE=$INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages
+    RPM="rpm --root $INSTALL_ROOT --ignorearch -ivh"
+    
+    # create partial directory
 	mkdir -p $INSTALL_ROOT
     if [ $? -ne 0 ]; then
 		error "Failed to create '$INSTALL_ROOT' directory"
@@ -41,106 +51,92 @@ download_centos()
     fi
     
     # create directories for yum
-	mkdir -p $INSTALL_ROOT/var/{lib/rpm,cache/yum/base/packages}
+	mkdir -p $INSTALL_ROOT/var/{lib/rpm,cache/yum/$ARCH/$SUITE/base/packages}
 	
 	# and update a yum.conf
-	echo "protected_multilib=1" >> /etc/yum/yum.conf
-	if [ "$ARCHITECTURE" = "x86_64" ]; then
-		# resolve a ¿bug? yum try to install i386 versions of packages
-		echo "exclude=*.i386 *.i686" >> /etc/yum/yum.conf
+	# echo "protected_multilib=1" >> /etc/yum/yum.conf
+	
+	if [ "$ARCH" = "i686" ]; then
+		ARCH='i386'
 	fi
 	
-    # download a mini centos into a cache
-    message "Downloading centos release file ..."
-
-    YUM="yum --disablerepo=updates --enablerepo=base --exclude=*.i386,*.i686 --installroot=$INSTALL_ROOT -y --nogpgcheck"
-    RPM="rpm --root $INSTALL_ROOT --ignorearch -ivh"
-    MIRRORLIST_URL="http://mirrorlist.centos.org/?release=6&arch=x86_64&repo=os"
-    
-    PKG_BASE="bash basesystem setup rootfiles MAKEDEV initscripts"
-    PKG_LIST="python rpm rpm-python libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML wget passwd rsyslog vim-minimal dhclient chkconfig policycoreutils openssh-clients openssl curl"
-    
+	#if [ "$ARCH" = "x86_64" ]; then
+		# resolve a ¿bug? yum try to install i386 versions of packages
+		# echo "exclude=*.i386 *.i686" >> /etc/yum/yum.conf
+	#fi
+	
+    # download centos mirror list
+    info "Downloading CentOS mirror list ..."
+	MIRRORLIST_URL="http://mirrorlist.centos.org/?release=$SUITE&arch=$ARCH&repo=os"
     
     # download centos-release.rpm
 	DOWNLOAD_OK=no
     for trynumber in 1 2 3; do
         [ $trynumber != 1 ] && echo "Trying again..."
-        MIRROR_URL=$(curl -s -S -f "$MIRRORLIST_URL" | head -n1 | tail -n1)
+        MIRROR_URL=$($WGET -qO- $MIRRORLIST_URL | head -n1)
+        # MIRROR_URL=$(curl -s -S -f "$MIRRORLIST_URL" | head -n1 | tail -n1)
         if [ $? -ne 0 ] || [ -z "$MIRROR_URL" ]; then
             echo "Failed to get a mirror"
             continue
         fi
-        RELEASE_URL="$MIRROR_URL/Packages/centos-release-$VERSION.$ARCHITECTURE.rpm"
-        echo "Fetching from: $RELEASE_URL"
-        curl -f "$RELEASE_URL" > $INSTALL_ROOT/centos-release-$VERSION.$ARCHITECTURE.rpm
+        RELEASE_URL="${MIRROR_URL}Packages/centos-release-$RELEASE.$ARCH.rpm"
+        
+        message "Fetching from: $RELEASE_URL"
+        wget --directory-prefix="$INSTALL_ROOT" $RELEASE_URL
+        # curl -f "$RELEASE_URL" > $INSTALL_ROOT/centos-release-$RELEASE.$ARCH.rpm
         if [ $? -ne 0 ]; then
-            echo "Failed to download centos release rpm"
+            echo "Failed to download CentOS release rpm"
             continue
         fi
         DOWNLOAD_OK=yes
+        RELEASE_FILE=$(basename $RELEASE_URL)
         break
     done
     
     if [ $DOWNLOAD_OK != yes ]; then
-        echo "Aborting"
         return 1
     fi
-
-    $RPM  --initdb
-    # install centos-release
-    $RPM $INSTALL_ROOT/centos-release-$VERSION.$ARCHITECTURE.rpm
-    # install base system
-    # esto no instala, pero descarga los paquetes en la cache local
-    $YUM makecache
-	# TODO: que se pueda solo descargar a la cache:
-	$YUM install $PKG_BASE
+	
+	# install centos-release
+    $RPM --nodeps ${INSTALL_ROOT}/${RELEASE_FILE}
+	$YUM makecache
+	info "Yum cache metadata created"
+	# download and install base system
+	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-"
+	debug "Download noarch and core archives"
+	PKG_MIRROR=`wget -q --force-html --no-parent -O - ${MIRROR_URL}Packages/ | sed -n "/href/ s/.*href=['\"]\([^'\"]*\)['\"].*/\1/gp" | egrep -i ".rpm$" | egrep -i $PKG_BASE`
+	# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
+	for pkg in $PKG_MIRROR; do
+		PACKAGE=${MIRROR_URL}Packages/$pkg
+		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
+		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
+	done
     
-    YUM_CACHE=$INSTALL_ROOT/var/cache/yum/base/packages
+    debug " - installing yum and rpm"
+	$YUM install rpm-build yum
     
-    $RPM --force --nodeps $YUM_CACHE/setup-*.noarch.rpm $YUM_CACHE/basesystem-*.noarch.rpm $YUM_CACHE/ca-certificates-*.noarch.rpm \
-    $YUM_CACHE/tzdata-*.noarch.rpm $YUM_CACHE/rootfiles-*.noarch.rpm $YUM_CACHE/filesystem-*.rpm \
-    $YUM_CACHE/hwdata-*.noarch.rpm
-    
-    # install all base packages
-    $YUM install $PKG_BASE
-    
-    # install centos and yum dependencies
-	$YUM install $PKG_LIST
-    
-    # try to install yum (download to cache)
-    $YUM install yum
-
     # Mount /dev (required for yum)
-    mount -o bind /dev "$INSTALL_ROOT/dev/"
+    mkdir $INSTALL_ROOT/dev/ -p
+    mount -o bind /dev $INSTALL_ROOT/dev/
+        
+	# rebuild db
+	#chroot $INSTALL_ROOT rpm --rebuilddb
     
-    # create a resolvconf
-    echo "nameserver 8.8.8.8" > $INSTALL_ROOT/etc/resolv.conf
+    # create a dummy resolvconf
+    cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
     
-    # make chroot
-    chroot $INSTALL_ROOT rpm --nodeps -ivh /var/cache/yum/base/packages/yum-*.rpm /var/cache/yum/base/packages/python-urlgrabber-*.rpm /var/cache/yum/base/packages/python-iniparse-*.rpm
-    
-    chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
-    
-    chroot $INSTALL_ROOT rpm --rebuilddb
-    
+	PKG_LIST="python rpm rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
+	
     # instalar desde dentro de la chroot, garantiza su instalacion
-    chroot $INSTALL_ROOT yum --disablerepo=updates install rpm yum $PKG_BASE $PKG_LIST
+    debug "- Install all packages in chroot environment"
+    chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
+    chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm yum $PKG_LIST
     if [ $? -ne 0 ]; then
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi
-        
-    # clean cache
-    chroot $ROOTFS yum clean all
-    chroot $INSTALL_ROOT rm -f /var/lib/rpm/__*
-    
-    # Unmount dev
-    umount "$INSTALL_ROOT/dev"
-
-	mv "$INSTALL_ROOT" "$CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE"
-    info "\nDownload $DIST $RELEASE complete.\n"
- 
-    return 0    
+    	
+    return 1
 }
 
 # make a local copy of the mini centos
@@ -168,13 +164,13 @@ install_centos()
         
         # cleaning cache of mini centos
         if [ "$CLEAN_CACHE" -eq "1" ]; then
-			message "Cache found in $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE. clearing ..."
-			rm --preserve-root --one-file-system -fR $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE && echo "Done." || exit 1
+			message "Cache found in $CACHE/$DIST/$SUITE/rootfs-$ARCH. clearing ..."
+			rm --preserve-root --one-file-system -fR $CACHE/$DIST/$SUITE/rootfs-$ARCH && echo "Done." || exit 1
         fi
         
         # check the mini debian was not already downloaded
-        message "Checking cache download in $CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE ... "
-        if [ ! -e "$CACHE/$DIST/$RELEASE/rootfs-$ARCHITECTURE" ]; then
+        message "Checking cache download in $CACHE/$DIST/$SUITE/rootfs-$ARCH ... "
+        if [ ! -e "$CACHE/$DIST/$SUITE/rootfs-$ARCH" ]; then
             download_centos
             if [ $? -ne 0 ]; then
                 error "Failed to download 'CentOS Base'"
@@ -319,7 +315,7 @@ centos_cleanup()
 
 create_container()
 {
-	info "\n= Creating a CentOS-Based LXC container =\n"
+	info "= Creating a CentOS-Based LXC container ="
 	# create cache and install centos
 	install_centos
     if [ $? -ne 0 ]; then
@@ -327,14 +323,18 @@ create_container()
        exit 1
     fi	
 	# configure chroot
-	configure_centos
+	#configure_centos
     if [ $? -ne 0 ]; then
        error "Failed to configure centos container"
        exit 1
     fi
-	# cleanup centos
-	centos_cleanup
-	info "\nCentOS LXC Container created\n"
-	return 0
 }
 
+
+cleanup_container()
+{
+	# cleanup centos
+	centos_cleanup
+	info "CentOS LXC Container created"
+	return 0
+}

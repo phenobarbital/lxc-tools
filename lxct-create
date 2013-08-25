@@ -348,7 +348,17 @@ check_template()
 	"archlinux")
 		DIST='Archlinux'
 		TEMPLATE='archlinux'
-		;;	
+		;;
+	"centos")
+		DIST='CentOS'
+		TEMPLATE='centos'
+		SUITE='6'
+		;;
+	"centosd")
+		DIST='CentOS'
+		TEMPLATE='centosd'
+		SUITE='6'
+		;;					
 	*)
 		usage_err "option '$1' invalid template option"
 		exit 1
