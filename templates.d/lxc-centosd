@@ -104,6 +104,9 @@ download_centos()
 		
 	# install centos-release
     $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
+    
+    debug " - installing yum and rpm"
+	$YUM install rpm-build yum rpm python    
 	
 	# download and install base system
 	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
@@ -122,10 +125,7 @@ download_centos()
 	
     # Mount /dev (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
-    mount -o bind /dev $INSTALL_ROOT/dev/
-    
-    debug " - installing yum and rpm"
-	$YUM install -y rpm rpm-build yum
+    mount -o bind /dev $INSTALL_ROOT/dev/	
     
 	# rebuild db
 	# chroot $INSTALL_ROOT rpm --rebuilddb
