@@ -107,7 +107,7 @@ download_centos()
     
     debug " - installing yum and rpm"
 	$YUM install rpm-build yum   
-	
+    if [ $? -ne 0 ]; then
 	# download and install base system
 	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
 	debug "Download noarch and core archives"
@@ -119,9 +119,9 @@ download_centos()
 		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
 		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
 	done
-
 	# install all downloaded packages
 	$RPM -ivh --nodeps $YUM_CACHE/*.rpm
+	fi
 	
     # Mount /dev (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
@@ -147,7 +147,7 @@ download_centos()
     fi
     
     # clean cache
-    # chroot $ROOTFS yum clean all
+    chroot $ROOTFS yum clean all
     # chroot $INSTALL_ROOT rm -f /var/lib/rpm/__*
     
     # umount dev
