@@ -128,7 +128,7 @@ download_centos()
     mount -o bind /dev $INSTALL_ROOT/dev/	
     
 	# rebuild db
-	# chroot $INSTALL_ROOT rpm --rebuilddb
+	chroot $INSTALL_ROOT rpm --rebuilddb
     
     # create a dummy resolvconf
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
@@ -139,7 +139,7 @@ download_centos()
     cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
-    chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates update yum rpm python
+    # chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates update yum rpm python
     chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm-python rpm yum $PKG_LIST
     if [ $? -ne 0 ]; then
 		echo "Failed to download the rootfs, aborting."
