@@ -238,7 +238,7 @@ install_package()
 				;;
 		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "installing Centos package $@"
-				/usr/bin/yum -y --assume-yes install "$@"
+				/usr/bin/yum -y install "$@"
 				;;			
 		*)
 				error "unknown package manager for $DIST"
@@ -261,9 +261,9 @@ remove_package()
 				#
 				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
 				;;
-		"centos"|"Centos"|"CENTOS"|"CentOS")
+		"centos"|"Centos"|"CENTOS"|"CentOS"|)
 				message "remove Centos package $@"
-				/usr/bin/yum -y --assume-yes erase "$@"
+				/usr/bin/yum -y erase "$@"
 				;;			
 		*)
 				error "unknown package manager for $DIST"

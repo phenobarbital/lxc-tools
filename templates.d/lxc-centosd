@@ -163,7 +163,7 @@ download_centos()
 copy_centos()
 {
     info "Copying rootfs to $ROOTFS..."
-    cp -apr $CACHE/$DIST/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
+    rsync -aqzpHSW $CACHE/$DIST/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
         exit 1
