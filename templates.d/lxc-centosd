@@ -106,7 +106,7 @@ download_centos()
     $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
     
     debug " - installing yum and rpm"
-	$YUM install rpm-build yum rpm python    
+	$YUM install rpm-build yum   
 	
 	# download and install base system
 	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
