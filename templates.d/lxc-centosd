@@ -40,8 +40,8 @@ download_centos()
 	
 	WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 	YUM="yum --disablerepo=updates --enablerepo=base --installroot=$INSTALL_ROOT -y --nogpgcheck"
-	YUM_CACHE=$INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages
-    RPM="rpm --root $INSTALL_ROOT --ignorearch -ivh"
+	YUM_CACHE=$INSTALL_ROOT/var/cache/yum/base/packages
+    RPM="rpm --root $INSTALL_ROOT --ignorearch"
     
     # create partial directory
 	mkdir -p $INSTALL_ROOT
@@ -51,7 +51,8 @@ download_centos()
     fi
     
     # create directories for yum
-	mkdir -p $INSTALL_ROOT/var/{lib/rpm,cache/yum/$ARCH/$SUITE/base/packages}
+	mkdir -p $INSTALL_ROOT/var/{lib/rpm,cache/yum/base/packages}
+	mkdir -p $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages
 	
 	# and update a yum.conf
 	# echo "protected_multilib=1" >> /etc/yum/yum.conf
@@ -98,11 +99,12 @@ download_centos()
     fi
 	
 	# install centos-release
-    $RPM --nodeps ${INSTALL_ROOT}/${RELEASE_FILE}
+    $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
 	$YUM makecache
 	info "Yum cache metadata created"
+	
 	# download and install base system
-	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-"
+	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
 	debug "Download noarch and core archives"
 	PKG_MIRROR=`wget -q --force-html --no-parent -O - ${MIRROR_URL}Packages/ | sed -n "/href/ s/.*href=['\"]\([^'\"]*\)['\"].*/\1/gp" | egrep -i ".rpm$" | egrep -i $PKG_BASE`
 	# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
@@ -111,16 +113,21 @@ download_centos()
 		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
 		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
 	done
-    
-    debug " - installing yum and rpm"
-	$YUM install rpm-build yum
-    
+	#$RPM --nodeps -ivh $YUM_CACHE/setup-*.noarch.rpm $YUM_CACHE/filesystem-*.rpm $YUM_CACHE/basesystem-*.noarch.rpm $YUM_CACHE/ca-certificates-*.noarch.rpm \
+    # $YUM_CACHE/tzdata-*.noarch.rpm $YUM_CACHE/rootfiles-*.noarch.rpm $YUM_CACHE/filesystem-*.rpm $YUM_CACHE/hwdata-*.noarch.rpm
+    	
+	$RPM -ivh --nodeps $YUM_CACHE/*.rpm
+	
     # Mount /dev (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
     mount -o bind /dev $INSTALL_ROOT/dev/
-        
+    	
+    
+    debug " - installing yum and rpm"
+	$YUM install -y rpm-build yum
+    
 	# rebuild db
-	#chroot $INSTALL_ROOT rpm --rebuilddb
+	chroot $INSTALL_ROOT rpm --rebuilddb
     
     # create a dummy resolvconf
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
@@ -128,6 +135,7 @@ download_centos()
 	PKG_LIST="python rpm rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
 	
     # instalar desde dentro de la chroot, garantiza su instalacion
+    mv $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
     chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm yum $PKG_LIST
@@ -135,7 +143,11 @@ download_centos()
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi
-    	
+    
+    # umount dev
+    umount -f $INSTALL_ROOT/dev/
+    
+    
     return 1
 }
 
