@@ -66,17 +66,17 @@ download_fedora()
 	DOWNLOAD_OK=no
     for trynumber in 1 2 3; do
         [ $trynumber != 1 ] && echo "Trying again..."
-        MIRROR_URL=$($WGET -qO- $MIRRORLIST_URL | head -2 | tail -n 1)
-        debug $MIRROR_URL
+        MIRROR_URL=$($WGET -qO- $MIRRORLIST_URL | head -3 | tail -n 1)
+        debug "trying from $MIRROR_URL ..."
         # MIRROR_URL=$(curl -s -S -f "$MIRRORLIST_URL" | head -n1 | tail -n1)
         if [ $? -ne 0 ] || [ -z "$MIRROR_URL" ]; then
             echo "Failed to get a mirror"
             continue
         fi
         if [ "$SUITE" -gt "16" ]; then
-            RELEASE_URL="${MIRROR_URL}/Packages/f/fedora-release-$SUITE-1.noarch.rpm"
+            RELEASE_URL="${MIRROR_URL}Packages/f/fedora-release-$SUITE-1.noarch.rpm"
         else
-            RELEASE_URL="${MIRROR_URL}/Packages/fedora-release-$SUITE-1.noarch.rpm"
+            RELEASE_URL="${MIRROR_URL}Packages/fedora-release-$SUITE-1.noarch.rpm"
         fi
           
         message "Fetching from: $RELEASE_URL"
