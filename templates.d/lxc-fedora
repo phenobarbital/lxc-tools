@@ -128,7 +128,7 @@ download_fedora()
     # rebuild rpm db
 	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig passwd vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML openssh-clients openssl curl"
+    PKG_LIST="initscripts passwd rsyslog vim-minimal less dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig passwd vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML openssh-clients openssl curl"
     # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
@@ -139,7 +139,8 @@ download_fedora()
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /fedora-release-*.rpm
     # install everything
-    chroot $INSTALL_ROOT yum -y --nogpgcheck install rpm yum $PKG_LIST
+    chroot $INSTALL_ROOT yum -y --nogpgcheck install rpm yum
+    chroot $INSTALL_ROOT yum -y --nogpgcheck install $PKG_LIST
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		umount -f $INSTALL_ROOT/sys/
@@ -157,7 +158,7 @@ download_fedora()
 	mv "$INSTALL_ROOT" "$CACHE/$DIST/$SUITE/rootfs-$ARCH"
     info "Download $DIST $SUITE complete."
  
-    return 1    
+    return 0    
 }
 
 # make a local copy of the mini centos
@@ -207,7 +208,7 @@ install_fedora()
     return $?
 }
 
-centos_network()
+fedora_network()
 {
 	if [ "$DHCP" = "y" ]; then
 		# configure using DHCP
@@ -257,7 +258,7 @@ echo $NAME > $ROOTFS/etc/hostname
 echo $HOSTNAME > $ROOTFS/etc/mailname
 }
 
-centos_devices()
+fedora_devices()
 {
 	DEV="$ROOTFS/dev"
     for tty in $(seq 1 4); do
@@ -287,7 +288,7 @@ none                    /dev/shm                tmpfs    nosuid,nodev    0 0
 EOF
 }
 
-centos_inittab() {
+fedora_inittab() {
 cat <<EOF > $ROOTFS/etc/inittab
 id:3:initdefault:
 si::sysinit:/etc/init.d/rcS
@@ -311,19 +312,19 @@ EOF
 configure_centos()
 {
 	# configure via mknod devices
-	centos_devices
+	fedora_devices
 	# configure debian network
-	centos_network
+	fedora_network
 	# inittab
-	centos_inittab
-	# running basic centos hooks
-	CENTOS="$TEMPLATEDIR/centos.d"
-	for f in $(find $CENTOS/* -maxdepth 1 -type f | sort --numeric-sort); do
+	fedora_inittab
+	# running basic fedora hooks
+	FEDORA="$TEMPLATEDIR/fedora.d"
+	for f in $(find $FEDORA/* -maxdepth 1 -type f | sort --numeric-sort); do
 		. $f
 	done
 }
 
-centos_cleanup()
+cleanup_fedora()
 {
 	#
 	# yum clean cache
@@ -337,17 +338,17 @@ centos_cleanup()
 
 create_container()
 {
-	info "= Creating a CentOS-Based LXC container ="
-	# create cache and install centos
+	info "= Creating a Fedora-Based LXC container ="
+	# create cache and install fedora
 	install_fedora
     if [ $? -ne 0 ]; then
-       error "Failed to install a 'CentOS Base' container"
+       error "Failed to install a 'Fedora $SUITE' container"
        exit 1
     fi	
 	# configure chroot
-	configure_centos
+	configure_fedora
     if [ $? -ne 0 ]; then
-       error "Failed to configure centos container"
+       error "Failed to configure Fedora container"
        exit 1
     fi
 }
@@ -355,8 +356,8 @@ create_container()
 
 cleanup_container()
 {
-	# cleanup centos
-	centos_cleanup
-	info "CentOS LXC Container created"
+	# fedora cleanup
+	cleanup_fedora
+	info "Fedora LXC Container created"
 	return 0
 }
