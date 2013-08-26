@@ -239,7 +239,11 @@ install_package()
 		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "installing Centos package $@"
 				/usr/bin/yum -y install "$@"
-				;;			
+				;;
+		"fedora"|"Fedora"|"FEDORA")
+				message "installing Fedora package $@"
+				/usr/bin/yum -y install "$@"
+				;;						
 		*)
 				error "unknown package manager for $DIST"
 				return 1
@@ -264,7 +268,11 @@ remove_package()
 		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "remove Centos package $@"
 				/usr/bin/yum -y erase "$@"
-				;;			
+				;;
+		"fedora"|"Fedora"|"FEDORA")
+				message "remove Fedora package $@"
+				/usr/bin/yum -y erase "$@"
+				;;							
 		*)
 				error "unknown package manager for $DIST"
 				return 1

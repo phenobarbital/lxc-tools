@@ -358,7 +358,12 @@ check_template()
 		DIST='CentOS'
 		TEMPLATE='centosd'
 		SUITE='6'
-		;;					
+		;;
+	"fedora")
+		DIST='Fedora'
+		TEMPLATE='fedora'
+		SUITE='18'
+		;;							
 	*)
 		usage_err "option '$1' invalid template option"
 		exit 1
