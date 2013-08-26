@@ -134,7 +134,7 @@ download_fedora()
     # rebuild rpm db
 	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal less dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig wget which libxml2 gnupg2 glib2 gpgme libxml2-python PyXML openssh-clients openssl curl"
+    PKG_LIST="initscripts passwd rsyslog vim-minimal less sudo dhclient rootfiles policycoreutils fedora-release python openssh-server chkconfig wget which openssh-clients openssl curl"
     # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
@@ -315,11 +315,11 @@ EOF
 chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
 chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
 # start udev on start
-sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
-sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
+#sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
+#sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
 # don't mount /dev/pts
-sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
-sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+#sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
+#sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
 }
 
 fedora_inittab() {

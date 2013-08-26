@@ -147,7 +147,6 @@ lxc.cgroup.devices.allow                = c 1:5 rwm
 lxc.cgroup.cpu.shares                  = 1024
 lxc.cgroup.cpuset.cpus                 = 1
 lxc.cgroup.memory.limit_in_bytes       = $MEMORY
-lxc.autodev                            = 1
 
 ## Filesystem
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
