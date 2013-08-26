@@ -283,7 +283,8 @@ fedora_devices()
 		rm -fR $DEV
 	fi
 	mkdir -p $DEV
-    for tty in $(seq 1 4); do
+	mknod -m 666 $DEV/tty c 5 0
+    for tty in $(seq 0 4); do
 	if [ ! -e $DEV/tty$tty ]; then
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
 	fi
