@@ -21,6 +21,7 @@ Están basados en las ideas de los Debian xen-tools, que permiten mediante roles
 - Fedora (> 16)
 - Canaima (> auyantepui)
 - ArchLinux (coming soon)
+- Ubuntu (coming soon)
 
 * Requerimientos
 

@@ -118,7 +118,7 @@ install_canaima()
         
         return 0
 
-        ) 200>/var/lock/subsys/lxc
+        ) 200>/var/lock/subsys/lxc-canaima
 
     return $?
 }
