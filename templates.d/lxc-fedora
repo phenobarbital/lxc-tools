@@ -331,6 +331,9 @@ fedora_systemd()
     chroot $ROOTFS ln -s /lib/systemd/system/multi-user.target /etc/systemd/system/default.target
     #dependency on a device unit fails it specially that we disabled udev
     sed -i 's/After=dev-%i.device/After=/' $ROOTFS/lib/systemd/system/getty\@.service
+	# Shut up systemd udev errors:
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
 }
 
 configure_fedora()

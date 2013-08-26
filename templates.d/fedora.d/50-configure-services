@@ -4,6 +4,8 @@
 # configure centos services
 #
 
+# install SSH
+chroot $ROOTFS /usr/bin/yum install openssh-server
 # enable SSH
 chroot $ROOTFS systemctl enable sshd.service
 
