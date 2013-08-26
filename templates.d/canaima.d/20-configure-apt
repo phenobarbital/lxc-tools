@@ -5,7 +5,7 @@
 #
 
 #
-# Setup the sources.list file for new installations of Debian GNU/Linux.
+# Setup the sources.list file for new installations of Canaima GNU/Linux.
 #
 
 # disable apt sources.list base
@@ -13,21 +13,8 @@ sed -i 's/^deb/#deb/' $ROOTFS/etc/apt/sources.list
 
 cat <<E_O_APT > $ROOTFS/etc/apt/sources.list.d/debian.list
 # oficial
-deb $MIRROR $SUITE main contrib non-free
-# updates
-deb http://http.debian.net/debian $SUITE-updates main
-# security
-deb http://security.debian.org/ $SUITE/updates main
+deb $MIRROR $SUITE main aportes
 E_O_APT
-
-#TODO install backports and security only in stable version
-
-if [ ! -z "$BACKPORTS" ] || [ "$BACKPORTS" = 'yes' ] ; then
-# enable backports
-cat <<EOF_BACK > $ROOTFS/etc/apt/sources.list.d/backports.list
-deb $MIRROR $SUITE-backports main
-EOF_BACK
-fi
 
 cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/10-$DIST
 Acquire::PDiffs "false";
@@ -48,9 +35,6 @@ Package: *
 Pin: release n=$SUITE
 Pin-Priority: 999
 
-Package: *
-Pin: release n=$SUITE-updates
-Pin-Priority: 999
 EOF
 
 cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/90-recommends

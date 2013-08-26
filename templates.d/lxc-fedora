@@ -167,16 +167,25 @@ download_fedora()
     return 0    
 }
 
-# make a local copy of the mini centos
+# make a local copy of fedora cache
 copy_fedora()
 {
     info "Copying Fedora rootfs to $ROOTFS..."
     rsync -aqzpHSW $CACHE/$DIST/$SUITE/rootfs-$ARCH/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
-		error "Failed to copy rootfs"
+		error "Failed to copy Fedora rootfs"
         exit 1
     fi
     return 0
+}
+
+update_fedora()
+{
+	chroot $ROOTFS /usr/bin/yum -y --nogpgcheck --enablerepo=updates update
+    if [ $? -ne 0 ]; then
+		error "Update failed Fedora rootfs"
+        exit 1
+    fi
 }
 
 # install centos cache in rootfs
@@ -288,9 +297,8 @@ fedora_devices()
     mount -o bind /sys "$ROOTFS/sys" 
 # configure a minimal fstab
 cat <<EOF > $ROOTFS/etc/fstab
-/dev/root               /                       rootfs   defaults        0 0
-devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
-none                    /dev/shm                tmpfs    nosuid,nodev    0 0
+proc            proc         proc    nodev,noexec,nosuid 0 0
+sysfs           sys          sysfs defaults  0 0
 EOF
 }
 

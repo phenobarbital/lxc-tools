@@ -26,8 +26,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 DIST='Canaima'
-SUITE='kerepakupai'
-CANAIMA_PACKAGES='canaima-llaves lsb-base base-files'
+SUITE='auyantepui'
+CANAIMA_PACKAGES='canaima-llaves,lsb-base,base-files'
 MIRROR='http://paquetes.canaima.softwarelibre.gob.ve/'
 
 download_canaima() 
@@ -38,6 +38,12 @@ download_canaima()
 		arch='i386'
 	fi
 	
+	# fix debootstrap script
+	if [ ! -f "/usr/share/debootstrap/scripts/$SUITE" ]; then
+		debug "fix Debian debootstrap to using $DIST $SUITE"
+		ln -s "/usr/share/debootstrap/scripts/sid" "/usr/share/debootstrap/scripts/$SUITE"
+	fi
+	
     mkdir -p "$CACHE/$DIST/$SUITE/partial-$arch"
     if [ $? -ne 0 ]; then
        	error "Failed to create '$CACHE/$DIST/$SUITE/partial-$arch' directory"
@@ -45,12 +51,10 @@ download_canaima()
     fi
     # download a mini debian into a cache
     message "Downloading Canaima Base ..."
-    debootstrap --verbose --variant=$VARIANT --arch=$arch --include $CANAIMA_PACKAGES $EXTRA_PACKAGES \
-        $SUITE $CACHE/$DIST/$SUITE/partial-$arch $MIRROR
+    debootstrap --verbose --variant=$VARIANT --arch=$arch --no-check-gpg --include=$CANAIMA_PACKAGES,$EXTRA_PACKAGES $SUITE $CACHE/$DIST/$SUITE/partial-$arch $MIRROR
     RESULT=$?
-
     if [ "$RESULT" != "0" ]; then
-       error "Failed to download the rootfs, aborting."
+       error "Failed to download Canaima rootfs, aborting."
        rm -fR "$CACHE/$DIST/$SUITE/partial-$arch"
        return 1
     fi
@@ -58,7 +62,7 @@ download_canaima()
     mv "$CACHE/$DIST/$SUITE/partial-$arch" "$CACHE/$DIST/$SUITE/rootfs-$arch"
     info "Download $DIST $SUITE complete."
 
-    return 1
+    return 0
 }
 
 copy_canaima()
