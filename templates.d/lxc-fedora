@@ -297,8 +297,9 @@ fedora_devices()
     mount -o bind /sys "$ROOTFS/sys" 
 # configure a minimal fstab
 cat <<EOF > $ROOTFS/etc/fstab
-proc            proc         proc    nodev,noexec,nosuid 0 0
-sysfs           sys          sysfs defaults  0 0
+proc            /proc         proc    nodev,noexec,nosuid 0 0
+sysfs           /sys          sysfs   defaults  0 0
+devpts          /dev/pts      devpts  defaults  0 0
 EOF
 }
 
@@ -323,10 +324,21 @@ c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 }
 
+fedora_systemd()
+{
+    unlink $ROOTFS/etc/systemd/system/default.target
+    chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev.service
+    chroot $ROOTFS ln -s /lib/systemd/system/multi-user.target /etc/systemd/system/default.target
+    #dependency on a device unit fails it specially that we disabled udev
+    sed -i 's/After=dev-%i.device/After=/' $ROOTFS/lib/systemd/system/getty\@.service
+}
+
 configure_fedora()
 {
 	# configure via mknod devices
 	fedora_devices
+	# configure systemd
+	fedora_systemd
 	# configure debian network
 	fedora_network
 	# inittab

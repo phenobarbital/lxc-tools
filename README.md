@@ -13,6 +13,15 @@ Dentro de los contenedores reside otra versión de GNU/Linux, la cual:
 LXC-tools son un conjunto de scripts que permiten crear contenedores personalizados de GNU/Linux Debian (y otras distribuciones) dentro de un contenedor LXC.
 Están basados en las ideas de los Debian xen-tools, que permiten mediante roles, personalizar las aplicaciones dentro de un LXC-container.
 
+* Distribuciones soportadas:
+
+- Debian (of course)
+- CentOS (6.x)
+- Gentoo (last stable stage3)
+- Fedora (> 16)
+- Canaima (> auyantepui)
+- ArchLinux (coming soon)
+
 * Requerimientos
 
 - lxc
