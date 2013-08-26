@@ -134,7 +134,7 @@ download_fedora()
     # rebuild rpm db
 	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal less sudo dhclient rootfiles policycoreutils fedora-release python openssh-server chkconfig wget which openssh-clients openssl curl"
+    PKG_LIST="initscripts passwd rsyslog vim-minimal less sudo dhclient rootfiles policycoreutils openssh-server chkconfig openssh-clients openssl"
     # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
