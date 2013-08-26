@@ -141,10 +141,10 @@ download_fedora()
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
     
     # instalar desde dentro de la chroot, garantiza su instalacion
-    # re-utilice packages
-    cp $INSTALL_ROOT/var/cache/yum/fedora/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/fedora/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT /bin/rpm -ivh /fedora-release-*.rpm
+	# re-utilice packages
+    cp $INSTALL_ROOT/var/cache/yum/fedora/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/fedora/packages    
     # install everything
     chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install rpm yum
     chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install $PKG_LIST
