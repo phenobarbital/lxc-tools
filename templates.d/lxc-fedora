@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-#  /usr/lib/lxc-tools/templates.d/lxc-centosd
+#  /usr/lib/lxc-tools/templates.d/lxc-canaima
 #
 #  Build container of centos 6.x in Debian 7 using yum+rpm
 ##
@@ -142,10 +142,10 @@ download_fedora()
     # instalar desde dentro de la chroot, garantiza su instalacion
     # cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
-    chroot $INSTALL_ROOT rpm -ivh /fedora-release-*.rpm
+    chroot $INSTALL_ROOT /bin/rpm -ivh /fedora-release-*.rpm
     # install everything
-    chroot $INSTALL_ROOT yum -y --disablerepo=updates --nogpgcheck install rpm yum
-    chroot $INSTALL_ROOT yum -y --disablerepo=updates --nogpgcheck install $PKG_LIST
+    chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install rpm yum
+    chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install $PKG_LIST
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		umount -f $INSTALL_ROOT/sys/
@@ -154,7 +154,7 @@ download_fedora()
     fi
     
     # clean cache
-    chroot $ROOTFS yum clean all
+    chroot $ROOTFS /usr/bin/yum clean all
     
     # umount dev
     umount -f $INSTALL_ROOT/dev/
@@ -314,7 +314,7 @@ c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 }
 
-configure_centos()
+configure_fedora()
 {
 	# configure via mknod devices
 	fedora_devices

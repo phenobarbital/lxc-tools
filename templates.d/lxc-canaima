@@ -1,8 +1,8 @@
 #!/bin/bash
 ##
-#  /usr/lib/lxc-tools/templates.d/lxc-debian
+#  /usr/lib/lxc-tools/templates.d/lxc-canaima
 #
-#  Build container from debian rules
+#  Build a canaima container from debian rules
 ##
 #
 # debootstrap debian install
@@ -28,6 +28,7 @@
 DIST='Canaima'
 SUITE='kerepakupai'
 CANAIMA_PACKAGES='canaima-llaves lsb-base base-files'
+MIRROR='http://paquetes.canaima.softwarelibre.gob.ve/'
 
 download_canaima() 
 {
@@ -35,31 +36,32 @@ download_canaima()
 		arch='amd64'
 	else
 		arch='i386'
-	fi	
-    mkdir -p "$CACHE/$SUITE/partial-$arch"
+	fi
+	
+    mkdir -p "$CACHE/$DIST/$SUITE/partial-$arch"
     if [ $? -ne 0 ]; then
-       	error "Failed to create '$CACHE/$SUITE/partial-$arch' directory"
+       	error "Failed to create '$CACHE/$DIST/$SUITE/partial-$arch' directory"
        	return 1
     fi
     # download a mini debian into a cache
-    message "Downloading Debian minimal ..."
+    message "Downloading Canaima Base ..."
     debootstrap --verbose --variant=$VARIANT --arch=$arch --include $CANAIMA_PACKAGES $EXTRA_PACKAGES \
-        $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
+        $SUITE $CACHE/$DIST/$SUITE/partial-$arch $MIRROR
     RESULT=$?
 
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
-       rm -fR "$CACHE/$SUITE/partial-$arch"
+       rm -fR "$CACHE/$DIST/$SUITE/partial-$arch"
        exit 1
     fi
 
-    mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
+    mv "$CACHE/$DIST/$SUITE/partial-$arch" "$CACHE/$DIST/$SUITE/rootfs-$arch"
     info "Download $DIST $SUITE complete."
 
     return 0
 }
 
-copy_debian()
+copy_canaima()
 {
 	# make a local copy of the minidebian
 	if [ "$ARCH" = 'x86_64' ]; then
@@ -67,10 +69,10 @@ copy_debian()
 	else
 		arch='i386'
 	fi	
-    info "Copying rootfs to $ROOTFS..."
-    rsync -aqzpHSW $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
+    info "Copying $DIST rootfs to $ROOTFS..."
+    rsync -aqzpHSW $CACHE/$DIST/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
-		error "Failed to copy rootfs"
+		error "Failed to copy $DIST rootfs"
         exit 1
     fi
 }
@@ -94,21 +96,21 @@ install_canaima()
 		
         # cleaning cache of mini debian
         if [ "$CLEAN_CACHE" -eq "1" ]; then
-			message "Cache found in $CACHE/$SUITE/rootfs-$arch. clearing ..."
-			rm -fR $CACHE/$SUITE/rootfs-$arch
+			message "Cache found in $CACHE/$DIST/$SUITE/rootfs-$arch. clearing ..."
+			rm -fR $CACHE/$DIST/$SUITE/rootfs-$arch
         fi
         
-        # check the mini debian was not already downloaded
-        message "Checking cache download in $CACHE/$SUITE/rootfs-$arch ... "
-        if [ ! -e "$CACHE/$SUITE/rootfs-$arch" ]; then
-            download_debian
+        # check canaima-base cache was not already downloaded
+        message "Checking cache download in $CACHE/$DIST/$SUITE/rootfs-$arch ... "
+        if [ ! -e "$CACHE/$DIST/$SUITE/rootfs-$arch" ]; then
+            download_canaima
             if [ $? -ne 0 ]; then
-                error "Failed to download 'Debian Base'"
+                error "Failed to download 'Canaima Base'"
                 exit 1
             fi
         fi
         
-        copy_debian
+        copy_canaima
         
         return 0
 
@@ -117,7 +119,7 @@ install_canaima()
     return $?
 }
 
-debian_network()
+canaima_network()
 {
 	if [ "$DHCP" = "y" ]; then
 cat <<EOF >> $ROOTFS/etc/network/interfaces
@@ -150,22 +152,22 @@ echo $HOSTNAME > $ROOTFS/etc/mailname
 
 }
 
-configure_debian()
+configure_canaima()
 {
 	# configure inittab
-	debian_inittab
+	canaima_inittab
 	# configure via mknod devices
-	debian_devices
+	canaima_devices
 	# configure debian network
-	debian_network
+	canaima_network
 	# running basic debian hooks
-	DEBIAN="$TEMPLATEDIR/debian.d"
-	for f in $(find $DEBIAN/* -maxdepth 1 -type f | sort --numeric-sort); do
+	CANAIMA="$TEMPLATEDIR/canaima.d"
+	for f in $(find $CANAIMA/* -maxdepth 1 -type f | sort --numeric-sort); do
 		. $f
 	done
 }
 
-debian_devices()
+canaima_devices()
 {
 	DEV="$ROOTFS/dev"
 	mknod -m 666 ${DEV}/tty c 5 0
@@ -198,10 +200,9 @@ cat <<EOF > $ROOTFS/etc/fstab
 devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
 none                    /dev/shm                tmpfs    nosuid,nodev    0 0
 EOF
-   
 }
 
-debian_inittab() {
+canaima_inittab() {
 cat <<EOF > $ROOTFS/etc/inittab
 id:3:initdefault:
 si::sysinit:/etc/init.d/rcS
