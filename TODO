@@ -1,21 +1,18 @@
 LXC-tools TODO list
 -------------------
 
+* Ubuntu, ArchLinux and Busybox templates
 * Check if container exists (name, directory, etc)
 * Check directory name (check_name) using a regex
 * Save LXC-container as a template (tar.gz)
+* Export LXC container
 * Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
 * LVM creation functionality
 * BTRFS creation functionality
-* Templates Ubuntu and Canaima
 * role for Debian hardening (install psad,shorewall,portsentry,fail2ban)
 * various functional roles (ex: web server)
 * crear un LXC a partir de una openvz template
 * crear un LXC-container a partir de una vps openvz (backup)
 * crear un LXC-application-container
-* crear un lxc-container a partir de un debootstrap (ubuntu, canaima)
-* create a CentOS LXC-container (working on)
 * Crear rol para un application-container lxct-app (ej: bind-chroot)
-* colored bash-messages (error and info functions) (ready)
-* use a more flexible getopt parse (ready)
