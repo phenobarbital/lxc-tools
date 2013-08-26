@@ -1,0 +1,7 @@
+#!/bin/bash
+# 10-configure-console
+#
+# configure an active console in sysconfig/init
+#
+
+sed -i 's/ACTIVE_CONSOLES=.*$/ACTIVE_CONSOLES="\/dev\/console \/dev\/tty[1-4]"/' $ROOTFS/etc/sysconfig/init

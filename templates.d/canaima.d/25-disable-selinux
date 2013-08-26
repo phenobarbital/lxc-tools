@@ -1,0 +1,21 @@
+#!/bin/bash
+# 25-disable-selinux
+#
+# Disable selinux in the container
+#
+
+mkdir -p $ROOTFS/selinux
+echo 0 > $ROOTFS/selinux/enforce
+
+cat <<EOF > $ROOTFS/etc/selinux/config
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+# enforcing - SELinux security policy is enforced.
+# permissive - SELinux prints warnings instead of enforcing.
+# disabled - No SELinux policy is loaded.
+SELINUX=disabled
+# SELINUXTYPE= can take one of these two values:
+# targeted - Only targeted network daemons are protected.
+# strict - Full SELinux protection.
+SELINUXTYPE=targeted
+EOF

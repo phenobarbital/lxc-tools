@@ -40,7 +40,7 @@ download_fedora()
 	echo $INSTALL_ROOT
 	
 	WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
-	YUM="yum --installroot=$INSTALL_ROOT -y --nogpgcheck"
+	YUM="yum --disablerepo=updates --installroot=$INSTALL_ROOT -y --nogpgcheck"
 	YUM_CACHE=$INSTALL_ROOT/var/cache/yum/base/packages
     RPM="rpm --root $INSTALL_ROOT --ignorearch"
     
@@ -95,6 +95,12 @@ download_fedora()
         return 1
     fi
     
+    # bug in python-urlgrabber, disable SSL verification
+    info " - disable ssl verify in yum.conf"
+    if [ -z `grep -q 'sslverify' /etc/yum/yum.conf` ]; then
+		echo "sslverify=0" >> /etc/yum/yum.conf
+	fi
+    
     # make yum cache
     $YUM makecache
 	info "Yum cache metadata created"
@@ -102,50 +108,41 @@ download_fedora()
 	# install fedora-release
     $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
     
-	# download and install base system
-	PKG_BASE="^bash-|^basesystem-|^filesystem-|^setup-|^rootfiles-|^MAKEDEV-|^initscripts-|^rpm-|^yum-|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
-	debug "Download noarch and core archives"
-	PKG_MIRROR=`wget -q --force-html --no-parent -O - ${MIRROR_URL}Packages/ | sed -n "/href/ s/.*href=['\"]\([^'\"]*\)['\"].*/\1/gp" | egrep -i ".rpm$" | egrep -i $PKG_BASE`
-	# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
-	for pkg in $PKG_MIRROR; do
-		PACKAGE=${MIRROR_URL}Packages/$pkg
-		debug " - downloading $pkg"
-		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
-		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
-	done
-    
+	# download and install base system    
     debug " - installing bash"
-    $YUM install bash
+    $YUM install bash basesystem filesystem
     
-    # Mount /dev (required for yum)
+    # Mount /dev and /sys (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
-    mount -o bind /dev $INSTALL_ROOT/dev/  
+    mount -o bind /dev $INSTALL_ROOT/dev/
     
+    mkdir $INSTALL_ROOT/sys/ -p
+    mount -o bind /sys $INSTALL_ROOT/sys/  
+        
     debug " - installing yum and rpm"
 	$YUM install rpm-build yum   
     if [ $? -ne 0 ]; then
 		error "error installing yum, aborted"
 		return 1
     fi
-    
-    # rebuild db
-	chroot $INSTALL_ROOT rpm --rebuilddb  
+    # rebuild rpm db
+	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal dhclient  rootfiles policycoreutils fedora-release python rpm rpm-python dhclient openssh-server chkconfig passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
-
-    $YUM install $PKG_LIST
+    PKG_LIST="initscripts passwd rsyslog vim-minimal dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig passwd vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML openssh-clients openssl curl"
+    # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
-    	
+    
     # instalar desde dentro de la chroot, garantiza su instalacion
     # cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /fedora-release-*.rpm
-    # install bash
+    # install everything
     chroot $INSTALL_ROOT yum -y --nogpgcheck install rpm yum $PKG_LIST
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
+		umount -f $INSTALL_ROOT/sys/
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi
@@ -155,7 +152,8 @@ download_fedora()
     
     # umount dev
     umount -f $INSTALL_ROOT/dev/
-
+	umount -f $INSTALL_ROOT/sys/
+	
 	mv "$INSTALL_ROOT" "$CACHE/$DIST/$SUITE/rootfs-$ARCH"
     info "Download $DIST $SUITE complete."
  

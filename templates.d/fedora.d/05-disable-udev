@@ -1,0 +1,20 @@
+#!/bin/bash
+# 10-disable-udev
+#
+# disable udev and sysinit
+#
+
+sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
+sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
+
+cat <<EOF >> $ROOTFS/etc/rc.d/rc.sysinit
+exit 0
+EOF
+
+# don't mount devpts, for pete's sake
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+ 
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit

@@ -1,0 +1,18 @@
+#!/bin/bash
+# 50-configure-services
+#
+# configure centos services
+#
+
+chroot $ROOTFS chkconfig udev-post off
+chroot $ROOTFS chkconfig network on
+chroot $ROOTFS chkconfig sshd on
+
+# disable services
+chroot $ROOTFS chkconfig --levels 2345 sendmail off
+
+# blacklist ipv6
+cat <<EOF >> $ROOTFS/etc/modprobe.d/blacklist
+blacklist ipv6
+blacklist net-pf-10
+EOF

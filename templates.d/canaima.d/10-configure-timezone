@@ -1,0 +1,11 @@
+#!/bin/bash
+# 02-configure-timezone
+#
+# This script configure timezone
+#
+
+# configurando zona horaria
+cp /etc/timezone $ROOTFS/etc/timezone
+cp /etc/localtime $ROOTFS/etc/localtime
+
+echo "export LC_ALL=POSIX" >> $ROOTFS/etc/profile

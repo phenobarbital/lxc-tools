@@ -1,0 +1,9 @@
+#!/bin/bash
+# 05-disable-hwclock
+#
+# This script disable hardware clock in container
+#
+
+# Disables services a container doesn't need
+chroot $ROOTFS /usr/sbin/update-rc.d -f hwclock.sh remove
+chroot $ROOTFS /usr/sbin/update-rc.d -f hwclockfirst.sh remove	
