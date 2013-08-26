@@ -115,18 +115,20 @@ download_fedora()
 		error "Cannot install Fedora Base system"
 		return 1
     fi   
-    # Mount /dev and /sys (required for yum)
+    # Mount /dev, /proc and /sys (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
     mount -o bind /dev $INSTALL_ROOT/dev/
-    
+    mkdir $INSTALL_ROOT/proc/ -p
+    mount -o bind /proc $INSTALL_ROOT/proc/     
     mkdir $INSTALL_ROOT/sys/ -p
     mount -o bind /sys $INSTALL_ROOT/sys/  
-        
+
     debug " - installing yum and rpm"
 	$YUM install rpm-build yum   
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
-		umount -f $INSTALL_ROOT/sys/    
+		umount -f $INSTALL_ROOT/sys/
+		umount -f $INSTALL_ROOT/proc/  
 		error "error installing yum, aborted"
 		return 1
     fi
@@ -149,6 +151,7 @@ download_fedora()
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		umount -f $INSTALL_ROOT/sys/
+		umount -f $INSTALL_ROOT/proc/  
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi
@@ -160,7 +163,7 @@ download_fedora()
     # umount dev
     umount -f $INSTALL_ROOT/dev/
 	umount -f $INSTALL_ROOT/sys/
-	
+	umount -f $INSTALL_ROOT/proc/
 	mv "$INSTALL_ROOT" "$CACHE/$DIST/$SUITE/rootfs-$ARCH"
     info "Download $DIST $SUITE complete."
  
