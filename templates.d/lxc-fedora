@@ -154,6 +154,7 @@ download_fedora()
     fi
     
     # clean cache
+    info "Cleaning Cache installation"
     chroot $ROOTFS /usr/bin/yum clean all
     
     # umount dev

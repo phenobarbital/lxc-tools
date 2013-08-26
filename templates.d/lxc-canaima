@@ -52,13 +52,13 @@ download_canaima()
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
        rm -fR "$CACHE/$DIST/$SUITE/partial-$arch"
-       exit 1
+       return 1
     fi
 
     mv "$CACHE/$DIST/$SUITE/partial-$arch" "$CACHE/$DIST/$SUITE/rootfs-$arch"
     info "Download $DIST $SUITE complete."
 
-    return 0
+    return 1
 }
 
 copy_canaima()
@@ -73,7 +73,7 @@ copy_canaima()
     rsync -aqzpHSW $CACHE/$DIST/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy $DIST rootfs"
-        exit 1
+        return 1
     fi
 }
 
@@ -85,7 +85,7 @@ install_canaima()
         flock -n -x 200
         if [ $? -ne 0 ]; then
             error "Cache repository is busy."
-            exit 1
+            return 1
         fi
         
 		if [ "$ARCH" = 'x86_64' ]; then
@@ -106,7 +106,7 @@ install_canaima()
             download_canaima
             if [ $? -ne 0 ]; then
                 error "Failed to download 'Canaima Base'"
-                exit 1
+                return 1
             fi
         fi
         
@@ -160,6 +160,10 @@ configure_canaima()
 	canaima_devices
 	# configure debian network
 	canaima_network
+    if [ $? -ne 0 ]; then
+		error "Failed to Configure 'Canaima Base'"
+		return 1
+    fi		
 	# running basic debian hooks
 	CANAIMA="$TEMPLATEDIR/canaima.d"
 	for f in $(find $CANAIMA/* -maxdepth 1 -type f | sort --numeric-sort); do
@@ -203,6 +207,7 @@ EOF
 }
 
 canaima_inittab() {
+	
 cat <<EOF > $ROOTFS/etc/inittab
 id:3:initdefault:
 si::sysinit:/etc/init.d/rcS
@@ -221,6 +226,7 @@ c2:12345:respawn:/sbin/getty 38400 tty2 linux
 #c3:12345:respawn:/sbin/getty 38400 tty3 linux
 #c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
+
 }
 
 cleanup_canaima()
@@ -249,13 +255,21 @@ cleanup_canaima()
 
 create_container()
 {
-	info "= Creating a Debian-Based LXC container ="
+	info "= Creating a Canaima-Base LXC container ="
 	# create cache and install Debian
 	install_canaima
-	debug "= Configure Debian-Based LXC container ="
+    if [ $? -ne 0 ]; then
+		error "Failed to download 'Canaima Base'"
+		return 1
+    fi	
+	debug "= Configure Canaima-Based LXC container ="
 	# configure chroot
 	configure_canaima
-	info "Debian LXC Container created"
+    if [ $? -ne 0 ]; then
+		error "Failed to configure 'Canaima Base'"
+		return 1
+    fi	
+	info "Canaima Base LXC Container created"
 	return 0
 }
 

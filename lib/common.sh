@@ -236,6 +236,13 @@ install_package()
 				#
 				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
 				;;
+		"canaima"|"Canaima"|"CANAIMA")
+				message "installing Canaima package $@"
+				#
+				# Install the packages
+				#
+				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
+				;;				
 		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "installing Centos package $@"
 				/usr/bin/yum -y install "$@"
@@ -265,6 +272,13 @@ remove_package()
 				#
 				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
 				;;
+		"canaima"|"Canaima"|"CANAIMA")
+				message "remove Canaima package $@"
+				#
+				# Install the packages
+				#
+				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get remove --yes --purge "$@"
+				;;				
 		"centos"|"Centos"|"CENTOS"|"CentOS")
 				message "remove Centos package $@"
 				/usr/bin/yum -y erase "$@"
