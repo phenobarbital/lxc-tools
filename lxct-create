@@ -91,7 +91,7 @@ execute_roles()
 
 function create_lxc_config() {
 	if [ -z "$SECURE" ]; then
-		CAPABILITIES='sys_admin sys_module mac_admin mac_override sys_time sys_module sys_nice sys_tty_config'
+		CAPABILITIES='sys_admin mac_admin mac_override sys_time sys_nice'
 	else
 		CAPABILITIES='sys_admin audit_control audit_write fsetid ipc_lock ipc_owner lease linux_immutable mac_admin mac_override mknod setfcap setpcap sys_module sys_nice sys_pacct sys_ptrace sys_rawio sys_tty_config sys_time'
 	fi

@@ -163,6 +163,7 @@ download_fedora()
     umount -f $INSTALL_ROOT/dev/
 	umount -f $INSTALL_ROOT/sys/
 	umount -f $INSTALL_ROOT/proc/
+	
 	mv "$INSTALL_ROOT" "$CACHE/$DIST/$SUITE/rootfs-$ARCH"
     info "Download $DIST $SUITE complete."
  
