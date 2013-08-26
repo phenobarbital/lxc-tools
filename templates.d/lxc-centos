@@ -205,7 +205,7 @@ install_centos()
         
         return 0
 
-        ) 200>/var/lock/subsys/lxc
+        ) 200>/var/lock/subsys/lxc-centos
 
     return $?
 }

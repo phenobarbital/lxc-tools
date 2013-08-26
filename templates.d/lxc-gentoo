@@ -160,7 +160,7 @@ install_gentoo()
         
         return 0
 
-        ) 200>/var/lock/subsys/lxc
+        ) 200>/var/lock/subsys/lxc-gentoo
 
     return $?
 }

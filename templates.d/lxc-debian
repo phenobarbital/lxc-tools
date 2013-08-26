@@ -45,7 +45,7 @@ download_debian()
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
        rm -fR "$CACHE/$SUITE/partial-$arch"
-       exit 1
+       return 1
     fi
 
     mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
@@ -107,7 +107,7 @@ install_debian()
         
         return 0
 
-        ) 200>/var/lock/subsys/lxc
+        ) 200>/var/lock/subsys/lxc-debian
 
     return $?
 }
@@ -153,6 +153,10 @@ configure_debian()
 	debian_devices
 	# configure debian network
 	debian_network
+    if [ $? -ne 0 ]; then
+		error "Failed to Configure 'Debian Base'"
+		return 1
+    fi	
 	# running basic debian hooks
 	DEBIAN="$TEMPLATEDIR/debian.d"
 	for f in $(find $DEBIAN/* -maxdepth 1 -type f | sort --numeric-sort); do
@@ -215,6 +219,7 @@ c2:12345:respawn:/sbin/getty 38400 tty2 linux
 #c3:12345:respawn:/sbin/getty 38400 tty3 linux
 #c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
+
 }
 
 debian_cleanup()
@@ -246,9 +251,17 @@ create_container()
 	info "= Creating a Debian-Based LXC container ="
 	# create cache and install Debian
 	install_debian
+    if [ $? -ne 0 ]; then
+		error "Failed to Download and install Debian Base"
+		return 1
+    fi
 	debug "= Configure Debian-Based LXC container ="
 	# configure chroot
 	configure_debian
+    if [ $? -ne 0 ]; then
+		error "Failed to Configure Debian Base"
+		return 1
+    fi		
 	info "Debian LXC Container created"
 	return 0
 }

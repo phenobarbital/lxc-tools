@@ -218,7 +218,7 @@ install_fedora()
         
         return 0
 
-        ) 200>/var/lock/subsys/lxc
+        ) 200>/var/lock/subsys/lxc-fedora
 
     return $?
 }
