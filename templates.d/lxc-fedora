@@ -134,7 +134,7 @@ download_fedora()
     # rebuild rpm db
 	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal less systemd sudo dhclient rootfiles policycoreutils openssh-server chkconfig openssh-clients openssl"
+    PKG_LIST="initscripts passwd rsyslog vim-minimal less sudo dhclient rootfiles policycoreutils chkconfig openssl"
     # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
@@ -306,20 +306,25 @@ fedora_devices()
     mount -o bind /sys "$ROOTFS/sys" 
 # configure a minimal fstab
 cat <<EOF > $ROOTFS/etc/fstab
+devtmpfs        /dev          devtmpfs defaults 0 0
 proc            /proc         proc    nodev,noexec,nosuid 0 0
 sysfs           /sys          sysfs   defaults  0 0
-devtmpfs        /dev          devtmpfs defaults 0 0
 EOF
 
 # Shut up systemd udev errors:
-chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
-chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
+if [ "$SUITE" -gt "15" ]; then
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/systemd-udevd.service
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
+	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/proc-sys-fs-binfmt_misc.automount	
+else
 # start udev on start
-#sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
-#sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
+	sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
+	sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
 # don't mount /dev/pts
-#sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
-#sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+	sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
+	sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+fi
 }
 
 fedora_inittab() {
@@ -343,31 +348,28 @@ c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 }
 
-fedora_systemd1()
+fedora_system()
 {
-    unlink $ROOTFS/etc/systemd/system/default.target
-    chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev.service
-    chroot $ROOTFS ln -s /lib/systemd/system/multi-user.target /etc/systemd/system/default.target
-    #dependency on a device unit fails it specially that we disabled udev
-    sed -i 's/After=dev-%i.device/After=/' $ROOTFS/lib/systemd/system/getty\@.service
-}
-
-fedora_systemd()
-{
-	# configure systemd
-	ETC=/etc/systemd/system
-	LIB=/lib/systemd/system
-	chroot ${ROOTFS} ln -sf ${LIB}/multi-user.target ${ETC}/default.target
-	chroot ${ROOTFS} cp ${LIB}/basic.target ${ETC}/basic.target
-	chroot ${ROOTFS} sed -i 's/sysinit.target/systemd-tmpfiles-setup.service/' ${ETC}/basic.target
-	chroot ${ROOTFS} ln -s /dev/null ${ETC}/sysinit.target
-	chroot ${ROOTFS} ln -s /dev/null ${ETC}/udev-settle.service
-	chroot ${ROOTFS} ln -s /dev/null ${ETC}/fedora-readonly.service
-	chroot ${ROOTFS} rm -f ${ETC}/getty.target.wants/getty\@tty{2,3,4,5,6}.service
-	chroot ${ROOTFS} ln -s /dev/null ${ETC}/console-shell.service
-	chroot ${ROOTFS} cp ${LIB}/getty\@.service ${ETC}/getty\@.service
-	chroot ${ROOTFS} sed -i 's/^BindTo/\#&/' ${ETC}/getty\@.service
-	chroot ${ROOTFS} ln -sf ${ETC}/getty\@.service ${ETC}/getty.target.wants/getty\@tty1.service
+	if [ "$SUITE" -gt "15" ]; then
+		# configure systemd
+		ETC=/etc/systemd/system
+		LIB=/lib/systemd/system
+		unlink $ROOTFS/etc/systemd/system/default.target
+		chroot ${ROOTFS} ln -sf ${LIB}/multi-user.target ${ETC}/default.target
+		chroot ${ROOTFS} cp ${LIB}/basic.target ${ETC}/basic.target
+		chroot ${ROOTFS} sed -i 's/sysinit.target/systemd-tmpfiles-setup.service/' ${ETC}/basic.target
+		chroot ${ROOTFS} ln -s /dev/null ${ETC}/sysinit.target
+		chroot ${ROOTFS} ln -s /dev/null ${ETC}/udev-settle.service
+		chroot ${ROOTFS} ln -s /dev/null ${ETC}/udev.service
+		chroot ${ROOTFS} ln -s /dev/null ${ETC}/fedora-readonly.service
+		chroot ${ROOTFS} rm -f ${ETC}/getty.target.wants/getty\@tty{2,3,4,5,6}.service
+		chroot ${ROOTFS} ln -s /dev/null ${ETC}/console-shell.service
+		chroot ${ROOTFS} cp ${LIB}/getty\@.service ${ETC}/getty\@.service
+		chroot ${ROOTFS} sed -i 's/^BindTo/\#&/' ${ETC}/getty\@.service
+		chroot ${ROOTFS} ln -sf ${ETC}/getty\@.service ${ETC}/getty.target.wants/getty\@tty1.service
+		#dependency on a device unit fails it specially that we disabled udev
+		chroot ${ROOTFS} sed -i 's/After=dev-%i.device/After=/' {LIB}/getty\@.service
+	fi
 	chroot ${ROOTFS} sed -i 's/^Defaults\ *requiretty/\#&/' /etc/sudoers
 	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/login
 	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/sshd
@@ -380,8 +382,8 @@ configure_fedora()
 {
 	# configure via mknod devices
 	fedora_devices
-	# configure systemd
-	fedora_systemd
+	# configure system
+	fedora_system
 	# configure debian network
 	fedora_network
 	# inittab

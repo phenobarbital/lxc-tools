@@ -5,7 +5,7 @@
 #
 
 # install SSH
-chroot $ROOTFS /usr/bin/yum -y install openssh-server
+chroot $ROOTFS /usr/bin/yum -y install openssh-server openssh-clients
 # enable SSH
 chroot $ROOTFS systemctl enable sshd.service
 
