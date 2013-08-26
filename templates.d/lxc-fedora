@@ -111,7 +111,10 @@ download_fedora()
 	# download and install base system    
     debug " - installing bash"
     $YUM install bash basesystem filesystem
-    
+    if [ $? -ne 0 ]; then    
+		error "Cannot install Fedora Base system"
+		return 1
+    fi   
     # Mount /dev and /sys (required for yum)
     mkdir $INSTALL_ROOT/dev/ -p
     mount -o bind /dev $INSTALL_ROOT/dev/
@@ -122,6 +125,8 @@ download_fedora()
     debug " - installing yum and rpm"
 	$YUM install rpm-build yum   
     if [ $? -ne 0 ]; then
+		umount -f $INSTALL_ROOT/dev/
+		umount -f $INSTALL_ROOT/sys/    
 		error "error installing yum, aborted"
 		return 1
     fi
@@ -139,8 +144,8 @@ download_fedora()
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /fedora-release-*.rpm
     # install everything
-    chroot $INSTALL_ROOT yum -y --nogpgcheck install rpm yum
-    chroot $INSTALL_ROOT yum -y --nogpgcheck install $PKG_LIST
+    chroot $INSTALL_ROOT yum -y --disablerepo=updates --nogpgcheck install rpm yum
+    chroot $INSTALL_ROOT yum -y --disablerepo=updates --nogpgcheck install $PKG_LIST
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		umount -f $INSTALL_ROOT/sys/
