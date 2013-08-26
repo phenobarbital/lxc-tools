@@ -28,7 +28,6 @@
 
 # re-define options
 DIST='fedora'
-SUITE='18'
 RELEASE_FILE=''
 MIRROR_URL=''
 
@@ -151,7 +150,7 @@ download_fedora()
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		umount -f $INSTALL_ROOT/sys/
-		umount -f $INSTALL_ROOT/proc/  
+		umount -f $INSTALL_ROOT/proc/
 		echo "Failed to download the rootfs, aborting."
 		return 1
     fi

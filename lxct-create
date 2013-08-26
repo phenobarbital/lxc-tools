@@ -340,6 +340,7 @@ check_template()
 	"canaima")
 		DIST='Canaima'
 		TEMPLATE='canaima'
+		SUITE='kerepakupai'
 		;;
 	"gentoo")
 		DIST='Gentoo'
@@ -352,11 +353,6 @@ check_template()
 	"centos")
 		DIST='CentOS'
 		TEMPLATE='centos'
-		SUITE='6'
-		;;
-	"centosd")
-		DIST='CentOS'
-		TEMPLATE='centosd'
 		SUITE='6'
 		;;
 	"fedora")

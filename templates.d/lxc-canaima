@@ -26,7 +26,6 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 DIST='Canaima'
-SUITE='auyantepui'
 CANAIMA_PACKAGES='canaima-llaves,lsb-base,base-files'
 MIRROR='http://paquetes.canaima.softwarelibre.gob.ve/'
 
