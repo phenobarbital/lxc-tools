@@ -134,7 +134,7 @@ download_fedora()
     # rebuild rpm db
 	chroot $INSTALL_ROOT rpm --rebuilddb
 
-    PKG_LIST="initscripts passwd rsyslog vim-minimal less dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig passwd vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML openssh-clients openssl curl"
+    PKG_LIST="initscripts passwd rsyslog vim-minimal less dhclient rootfiles policycoreutils fedora-release python rpm rpm-python openssh-server chkconfig wget which libxml2 gnupg2 glib2 gpgme libxml2-python PyXML openssh-clients openssl curl"
     # $YUM install $PKG_LIST
     
     # create a dummy resolvconf
@@ -157,7 +157,7 @@ download_fedora()
     
     # clean cache
     info "Cleaning Cache installation"
-    chroot $ROOTFS /usr/bin/yum clean all
+    chroot $INSTALL_ROOT /usr/bin/yum clean all
     
     # umount dev
     umount -f $INSTALL_ROOT/dev/
@@ -279,21 +279,25 @@ echo $HOSTNAME > $ROOTFS/etc/mailname
 fedora_devices()
 {
 	DEV="$ROOTFS/dev"
+	if [ ! -z "$ROOTFS" ]; then
+		rm -fR $DEV
+	fi
+	mkdir -p $DEV
     for tty in $(seq 1 4); do
 	if [ ! -e $DEV/tty$tty ]; then
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
 	fi
-    done	
-    mknod -m 666 $DEV/zero c 1 5
-    mknod -m 666 $DEV/random c 1 8
-    mknod -m 666 $DEV/urandom c 1 9
-    rm -f ${DEV}/pts
-    mkdir -m 755 $DEV/pts
-    rm -f ${DEV}/shm
-    mkdir -m 1777 $DEV/shm
-    mknod -m 600 $DEV/console c 5 1
-    mknod -m 666 $DEV/full c 1 7
-    mknod -m 600 $DEV/initctl p
+    done
+    mknod -m 666 ${DEV}/null c 1 3
+    mknod -m 666 ${DEV}/zero c 1 5
+    mknod -m 666 ${DEV}/random c 1 8
+    mknod -m 666 ${DEV}/urandom c 1 9
+    mkdir -m 755 ${DEV}/pts
+    mkdir -m 1777 ${DEV}/shm
+    mknod -m 600 ${DEV}/console c 5 1
+    mknod -m 666 ${DEV}/full c 1 7
+    mknod -m 600 ${DEV}/initctl p
+    mknod -m 666 ${DEV}/ptmx c 5 2
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
@@ -303,7 +307,18 @@ cat <<EOF > $ROOTFS/etc/fstab
 proc            /proc         proc    nodev,noexec,nosuid 0 0
 sysfs           /sys          sysfs   defaults  0 0
 devpts          /dev/pts      devpts  defaults  0 0
+
 EOF
+
+# Shut up systemd udev errors:
+chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
+chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
+# start udev on start
+sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
+sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
+# don't mount /dev/pts
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
+sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
 }
 
 fedora_inittab() {
@@ -327,16 +342,37 @@ c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 }
 
-fedora_systemd()
+fedora_systemd1()
 {
     unlink $ROOTFS/etc/systemd/system/default.target
     chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev.service
     chroot $ROOTFS ln -s /lib/systemd/system/multi-user.target /etc/systemd/system/default.target
     #dependency on a device unit fails it specially that we disabled udev
     sed -i 's/After=dev-%i.device/After=/' $ROOTFS/lib/systemd/system/getty\@.service
-	# Shut up systemd udev errors:
-	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-control.socket
-	chroot $ROOTFS ln -s /dev/null /etc/systemd/system/udev-kernel.socket
+}
+
+fedora_systemd()
+{
+	# configure systemd
+	ETC=/etc/systemd/system
+	LIB=/lib/systemd/system
+	chroot ${ROOTFS} ln -sf ${LIB}/multi-user.target ${ETC}/default.target
+	chroot ${ROOTFS} cp ${LIB}/basic.target ${ETC}/basic.target
+	chroot ${ROOTFS} sed -i 's/sysinit.target/systemd-tmpfiles-setup.service/' ${ETC}/basic.target
+	chroot ${ROOTFS} ln -s /dev/null ${ETC}/sysinit.target
+	chroot ${ROOTFS} ln -s /dev/null ${ETC}/udev-settle.service
+	chroot ${ROOTFS} ln -s /dev/null ${ETC}/fedora-readonly.service
+	chroot ${ROOTFS} rm -f ${ETC}/getty.target.wants/getty\@tty{2,3,4,5,6}.service
+	chroot ${ROOTFS} ln -s /dev/null ${ETC}/console-shell.service
+	chroot ${ROOTFS} cp ${LIB}/getty\@.service ${ETC}/getty\@.service
+	chroot ${ROOTFS} sed -i 's/^BindTo/\#&/' ${ETC}/getty\@.service
+	chroot ${ROOTFS} ln -sf ${ETC}/getty\@.service ${ETC}/getty.target.wants/getty\@tty1.service
+	chroot ${ROOTFS} sed -i 's/^Defaults\ *requiretty/\#&/' /etc/sudoers
+	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/login
+	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/sshd
+	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/crond
+	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/remote
+	echo "pts/0" >> ${ROOTFS}/etc/securetty
 }
 
 configure_fedora()

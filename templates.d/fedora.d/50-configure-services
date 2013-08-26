@@ -9,6 +9,9 @@ chroot $ROOTFS /usr/bin/yum -y install openssh-server
 # enable SSH
 chroot $ROOTFS systemctl enable sshd.service
 
+# enable network
+chroot $ROOTFS chkconfig network on
+
 # blacklist ipv6
 cat <<EOF >> $ROOTFS/etc/modprobe.d/blacklist
 blacklist ipv6
