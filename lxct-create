@@ -153,7 +153,6 @@ lxc.cgroup.cpuset.cpus                 = 1
 lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 
 ## Filesystem
-# lxc.mount.entry                        = devtmpfs $ROOTFS/dev devtmpfs defaults 0 0
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
@@ -163,6 +162,11 @@ if [ "$DIST" == 'gentoo' ]; then
 cat <<EOF > $CONFIGFILE
 lxc.mount.entry                        = portagetmp $ROOTFS/var/portage/tmp tmpfs rw,nosuid,nodev 0 0
 lxc.mount.entry                        = run $ROOTFS/run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
+EOF
+fi
+if [ "$DIST" == 'fedora' ]; then
+cat <<EOF > $CONFIGFILE
+lxc.mount.entry                        = devtmpfs $ROOTFS/dev devtmpfs defaults 0 0
 EOF
 fi
     if [ $? -ne 0 ]; then
