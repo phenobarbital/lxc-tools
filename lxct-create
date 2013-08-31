@@ -226,7 +226,7 @@ umount_lvm()
 	if [ "$FS_METHOD" = 'lvm' ]; then
 		#umount 
 		umount -f $LVROOTFS
-	if
+	fi
 }
 
 create_btrfs_volume() {
