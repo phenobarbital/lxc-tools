@@ -20,15 +20,6 @@ deb http://http.debian.net/debian $SUITE-updates main
 deb http://security.debian.org/ $SUITE/updates main
 E_O_APT
 
-#TODO install backports and security only in stable version
-
-if [ ! -z "$BACKPORTS" ] || [ "$BACKPORTS" = 'yes' ] ; then
-# enable backports
-cat <<EOF_BACK > $ROOTFS/etc/apt/sources.list.d/backports.list
-deb $MIRROR $SUITE-backports main
-EOF_BACK
-fi
-
 cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/10-$DIST
 Acquire::PDiffs "false";
 // Acquire::Language "none";
