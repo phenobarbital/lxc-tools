@@ -208,9 +208,25 @@ EOF
 			error "$(basename $0) error: $LVROOTFS not created"
 			exit 1
 		fi
-		# mount
-		mount -t $FS $LVROOTFS $ROOTFS
   fi
+}
+
+mount_lvm()
+{
+	if [ "$FS_METHOD" = 'lvm' ]; then
+		# mount LVROOTFS in ROOTFS
+		if [ -f "$LVROOTFS" ]; then
+			mount -t $FS $LVROOTFS $ROOTFS
+		fi
+	fi
+}
+
+umount_lvm()
+{
+	if [ "$FS_METHOD" = 'lvm' ]; then
+		#umount 
+		umount -f $LVROOTFS
+	if
 }
 
 create_btrfs_volume() {
@@ -561,6 +577,7 @@ main()
 	"lvm")
 		# mount LVM volume
 		create_lvm_volume
+		mount_lvm
 		touch_config
 		;;
 	"*")
@@ -587,6 +604,7 @@ main()
 	# cleanup container
 	cleanup_container
 	message "Creation of Container finished."
+	umount_lvm
     install_summary
     info "You can run your container with the 'lxc-start -n $NAME -d'"    
 }
