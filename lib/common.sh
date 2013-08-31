@@ -204,13 +204,23 @@ get_arch()
 
 # get repository name
 # TODO case ... esac for dist versions
-get_suite_repository() 
+set_suite_repository() 
 {
-	if [ "$dist" = "Debian" ]; then
-		suite=`get_suite`
-		grep -r "^deb http*" /etc/apt | grep "$suite main" | head -n1 | cut -d ' ' -f2
-	else
-		echo 'http://http.debian.net/debian/'
+	if [[ -z "$MIRROR" || "$MIRROR" = "auto" || -n "$MIRROR" ]]; then
+		# get repository information
+		case "$DIST" in
+			"debian"|"Debian"|"DEBIAN")
+			if [[ -z "$SUITE" || "$SUITE" = "auto" || -n "$SUITE" ]]; then
+				suite=`get_suite`
+				_suite=`grep -r "^deb http*" /etc/apt | grep "debian" | grep "$suite main" | head -n1 | cut -d ' ' -f2`
+				if [ -z "$_suite" ]; then
+					MIRROR='http://http.debian.net/debian/'
+				else
+					MIRROR=$_suite
+				fi
+			fi
+			;;
+		esac
 	fi
 }
 

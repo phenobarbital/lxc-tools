@@ -37,7 +37,12 @@ download_debian()
        	return 1
     fi
     # download a mini debian into a cache
+    info "este $SUITE"
+    info "este $DIST"
+    
     message "Downloading Debian minimal ..."
+    cmd="debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES $SUITE $CACHE/$SUITE/partial-$arch $MIRROR"
+    debug $cmd
     debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES \
         $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
     RESULT=$?

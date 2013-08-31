@@ -199,8 +199,8 @@ if [ -z "$DIST" ] || [ "$DIST" = 'auto' ]; then
 		SUITE=`get_suite`
 	fi
 	if [ "$MIRROR" = "auto" ]; then
-		MIRROR=`get_suite_repository`
-	fi	
+		set_suite_repository
+	fi
 fi
 
 # define default size, if $SIZE is not defined

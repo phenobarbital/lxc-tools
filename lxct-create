@@ -42,6 +42,10 @@ get_template()
 				debug "- using lxc-debian as template"
 				TEMPLATE="$TEMPLATEDIR/lxc-debian"
 				;;
+			"ubuntu"|"Ubuntu"|"UBUNTU")
+				debug "- using lxc-ubuntu as template"
+				TEMPLATE="$TEMPLATEDIR/lxc-ubuntu"
+				;;				
 			"centos"|"Centos"|"CENTOS"|"CentOS")
 				debug "- using lxc-centos as template"
 				TEMPLATE="$TEMPLATEDIR/lxc-centos"
@@ -244,6 +248,7 @@ ROLE=''
 HOSTNAME=''
 LAN_INTERFACE='eth0'
 CLEAN_CACHE=0
+FORCE=0
 
 usage() {
 	echo "Usage: $(basename $0) [-n|--name=<container_name>] [-t|--template=<template-name>]
@@ -279,6 +284,7 @@ Options:
   --debug                    Enable debugging information
   --dhcp                     Container interface is in dhcp mode
   --ip                       IP Address of container
+  --force                    Destroy LXC before creation
   Help options:
       --help     give this help list
       --usage	 Display brief usage message
@@ -476,6 +482,9 @@ while [ $# -gt 0 ]; do
         --clean)
             CLEAN_CACHE=1
             ;;
+        --force)
+            FORCE=1
+            ;;      
         --version)
 			get_version
 			exit 0;;
@@ -560,6 +569,8 @@ main()
     create_lxc_config
     ## creating vm from template
     get_template
+    set_suite_repository
+    
     debug "creating container from template $TEMPLATE"
     . $TEMPLATE
     create_container
