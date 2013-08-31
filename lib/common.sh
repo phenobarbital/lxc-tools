@@ -6,7 +6,7 @@
 #
 ##
 
-VERSION='0.3'
+VERSION='0.4'
 
 export NORMAL='\033[0m'
 export RED='\033[1;31m'

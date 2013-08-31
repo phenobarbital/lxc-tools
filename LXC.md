@@ -82,4 +82,11 @@ usage : CONFIG=/path/to/config /usr/bin/lxc-checkconfig
 grep cgroup /proc/self/mounts
 cgroup /sys/fs/cgroup cgroup rw,relatime,perf_event,blkio,net_cls,freezer,devices,memory,cpuacct,cpu,cpuset 0 0
 
+Instalacion de dependencias (Debian)
+=====
+
+* instalar las dependencias
+
+apt-get install debootstrap lsb-release wget rsync curl yum rpm
+
 Listo!, ya puedes hacer uso de los LXC-tools.
