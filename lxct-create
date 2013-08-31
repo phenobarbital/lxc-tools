@@ -2,7 +2,7 @@
 # ================================================================================
 # LXC-tools: Appliance and LXC container builder for Debian GNU/Linux (and derivatives)
 #
-# Copyright © 2010 Jesús Lara Giménez (phenobarbital) <jesuslara@devel.com.ve>>
+# Copyright © 2010 Jesús Lara Giménez (phenobarbital) <jesuslarag@gmail.com>
 # Version: 0.3    
 #
 #    Developed by Jesus Lara (phenobarbital) <jesuslara@phenobarbital.info>
@@ -152,7 +152,7 @@ lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 lxc.mount.entry                        = devtmpfs $ROOTFS/dev devtmpfs defaults 0 0
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
-lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
+#lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
 lxc.mount.entry                        = tmpfs $ROOTFS/dev/shm tmpfs nodev,nosuid,noexec,mode=1777,rw 0 0
 EOF
 if [ "$DIST" == 'gentoo' ]; then

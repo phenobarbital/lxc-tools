@@ -306,9 +306,10 @@ fedora_devices()
     mount -o bind /sys "$ROOTFS/sys" 
 # configure a minimal fstab
 cat <<EOF > $ROOTFS/etc/fstab
-devtmpfs        /dev          devtmpfs defaults 0 0
-proc            /proc         proc    nodev,noexec,nosuid 0 0
-sysfs           /sys          sysfs   defaults  0 0
+/dev/root           /             rootfs   defaults        0 0
+proc            	/proc         proc    nodev,noexec,nosuid 0 0
+devpts              /dev/pts      devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
+sysfs           	/sys          sysfs   defaults  0 0
 EOF
 
 # Shut up systemd udev errors:
@@ -372,8 +373,8 @@ fedora_system()
 	fi
 	chroot ${ROOTFS} sed -i 's/^Defaults\ *requiretty/\#&/' /etc/sudoers
 	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/login
-	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/sshd
-	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/crond
+#	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/sshd
+#	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/crond
 	chroot ${ROOTFS} sed -i 's/^.*loginuid.so.*$/\#&/' /etc/pam.d/remote
 	echo "pts/0" >> ${ROOTFS}/etc/securetty
 }
