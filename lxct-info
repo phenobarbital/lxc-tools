@@ -30,7 +30,7 @@ fi
 if [ -e /etc/lxc-tools/lxc-tools.conf ]; then
     . /etc/lxc-tools/lxc-tools.conf
 else
-    . ./share/lxc-tools.conf
+    . ./etc/lxc-tools.conf
 fi
 
 #
