@@ -48,15 +48,13 @@ echo "root:$PASS" | chroot $ROOTFS chpasswd
 
 # configure sudo
 #
-# Install sudo package
-#
-install_package sudo
 
 # enable wheel
 sed -Ei 's/^#(%wheel.*)/\1/' /etc/sudoers
 
 # fix permissions
 chmod 440 $ROOTFS/etc/sudoers
+chmod u-w $ROOTFS/etc/sudoers
 
 # add user to sudo group
 chroot $ROOTFS /usr/sbin/usermod -G wheel $ACCOUNT

@@ -135,7 +135,7 @@ download_centos()
     # create a dummy resolvconf
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
     
-	PKG_LIST="python rpm rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
+	PKG_LIST="python rpm sudo rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
 	
     # instalar desde dentro de la chroot, garantiza su instalacion
     cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
@@ -263,6 +263,7 @@ echo $HOSTNAME > $ROOTFS/etc/mailname
 centos_devices()
 {
 	DEV="$ROOTFS/dev"
+	mknod -m 666 $DEV/tty c 5 0
     for tty in $(seq 1 4); do
 	if [ ! -e $DEV/tty$tty ]; then
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
@@ -281,13 +282,7 @@ centos_devices()
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
-    mount -o bind /sys "$ROOTFS/sys" 
-# configure a minimal fstab
-cat <<EOF > $ROOTFS/etc/fstab
-/dev/root               /                       rootfs   defaults        0 0
-devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
-none                    /dev/shm                tmpfs    nosuid,nodev    0 0
-EOF
+    mount -o bind /sys "$ROOTFS/sys"
 }
 
 centos_inittab() {

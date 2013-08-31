@@ -37,5 +37,7 @@ logData()
 
 logMessage () {
   scriptname=$(basename $0)
-  echo "`date +"%D %T"` $scriptname : $@" >> $LOGFILE
+  if [ -f "$LOGFILE" ]; then
+	echo "`date +"%D %T"` $scriptname : $@" >> $LOGFILE
+  fi
 }
