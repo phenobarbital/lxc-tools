@@ -188,19 +188,23 @@ debian_devices()
     mknod -m 600 ${DEV}/console c 5 1
     rm -f ${DEV}/full
     mknod -m 666 ${DEV}/full c 1 7
-    # Mount pseudo-filesystems
-    mount -o bind /dev/pts "$ROOTFS/dev/pts"
-    mount -o bind /proc "$ROOTFS/proc"
-    mount -o bind /sys "$ROOTFS/sys"
-	# Bind mount systems apt cache
-    mount -o bind /var/cache/apt/archives "$ROOTFS/var/cache/apt/archives"
+    # added other devices
+    mknod -m 600 ${DEV}/initctl p
+    mknod -m 666 ${DEV}/ptmx c 5 2
+    mkdir -m 1777 ${DEV}/shm
     # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
 /dev/root               /                       rootfs   defaults        0 0
 devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
 none                    /dev/shm                tmpfs    nosuid,nodev    0 0
 EOF
-
+    # Mount pseudo-filesystems
+    mount -o bind /dev/pts "$ROOTFS/dev/pts"
+    mount -o bind /proc "$ROOTFS/proc"
+    mount -o bind /sys "$ROOTFS/sys"
+	# Bind mount systems apt cache
+    mount -o bind /var/cache/apt/archives "$ROOTFS/var/cache/apt/archives"
+    return 0
 }
 
 debian_inittab() {
