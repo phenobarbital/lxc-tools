@@ -198,6 +198,7 @@ cat <<EOF > $ROOTFS/etc/fstab
 devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
 none                    /dev/shm                tmpfs    nosuid,nodev    0 0
 EOF
+
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
@@ -207,6 +208,7 @@ EOF
     return 0
 }
 
+# create a minimal inittab
 debian_inittab() {
 cat <<EOF > $ROOTFS/etc/inittab
 id:3:initdefault:
