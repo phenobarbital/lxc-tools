@@ -333,6 +333,7 @@ check_template()
 	"debian")
 		DIST='Debian'
 		TEMPLATE='debian'
+		SUITE=`get_suite`
 		;;
 	"ubuntu")
 		DIST='Ubuntu'

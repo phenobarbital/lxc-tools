@@ -47,10 +47,8 @@ download_debian()
        rm -fR "$CACHE/$SUITE/partial-$arch"
        return 1
     fi
-
     mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
     info "Download $DIST $SUITE complete."
-
     return 0
 }
 
@@ -142,7 +140,6 @@ EOF
 # set the hostname
 echo $NAME > $ROOTFS/etc/hostname
 echo $HOSTNAME > $ROOTFS/etc/mailname
-
 }
 
 configure_debian()
@@ -176,6 +173,7 @@ debian_devices()
 	if [ ! -e $DEV/tty$tty ]; then
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
 	fi
+	done
     rm -f ${DEV}/null
 	mknod -m 666 ${DEV}/null c 1 3
 	rm -f ${DEV}/zero
@@ -192,13 +190,6 @@ debian_devices()
     mknod -m 600 ${DEV}/initctl p
     mknod -m 666 ${DEV}/ptmx c 5 2
     mkdir -m 1777 ${DEV}/shm
-    # configure a minimal fstab for container
-cat <<EOF > $ROOTFS/etc/fstab
-/dev/root               /                       rootfs   defaults        0 0
-devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
-none                    /dev/shm                tmpfs    nosuid,nodev    0 0
-EOF
-
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
@@ -208,8 +199,8 @@ EOF
     return 0
 }
 
-# create a minimal inittab
 debian_inittab() {
+	# create a minimal inittab
 cat <<EOF > $ROOTFS/etc/inittab
 id:3:initdefault:
 si::sysinit:/etc/init.d/rcS
@@ -228,7 +219,12 @@ c2:12345:respawn:/sbin/getty 38400 tty2 linux
 #c3:12345:respawn:/sbin/getty 38400 tty3 linux
 #c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
-
+# configure a minimal fstab for container
+cat <<EOF > $ROOTFS/etc/fstab
+/dev/root               /                       rootfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620,newinstance,ptmxmode=0666  0 0
+none                    /dev/shm                tmpfs    nosuid,nodev    0 0
+EOF
 }
 
 debian_cleanup()
