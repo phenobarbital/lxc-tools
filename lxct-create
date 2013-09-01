@@ -596,8 +596,7 @@ main()
 
 	# create config file
     create_lxc_config
-    
-    exit 0
+
     ## creating vm from template
     get_template
     set_suite_repository
