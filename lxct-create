@@ -95,7 +95,7 @@ execute_roles()
 
 function create_lxc_config() {
 	if [ -z "$SECURE" ]; then
-		CAPABILITIES='sys_admin mac_admin mac_override sys_time sys_nice'
+		CAPABILITIES='mac_admin mac_override sys_time sys_nice'
 	else
 		CAPABILITIES='sys_admin audit_control audit_write fsetid ipc_lock ipc_owner lease linux_immutable mac_admin mac_override mknod setfcap setpcap sys_module sys_nice sys_pacct sys_ptrace sys_rawio sys_tty_config sys_time'
 	fi
@@ -104,7 +104,6 @@ cat <<EOF > $CONFIGFILE
 
 ## Container
 lxc.utsname                             = $NAME
-lxc.rootfs                              = $ROOTFS
 lxc.arch                                = $ARCH
 # lxc.console                             = /var/log/lxc/$NAME.console
 lxc.tty                                 = 2
@@ -112,7 +111,6 @@ lxc.pts                                 = 1024
 
 ## network
 lxc.network.type                        = $NET_TYPE
-lxc.network.flags                       = up
 $NET_OPTIONS
 
 ## Capabilities
@@ -153,19 +151,29 @@ lxc.cgroup.cpuset.cpus                 = 1
 lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 
 ## Filesystem
+EOF
+if [ "$BACKEND_METHOD" == 'lvm' ]; then
+cat <<EOF >> $CONFIGFILE
+lxc.rootfs                              = $LVROOTFS
+EOF
+else
+cat <<EOF >> $CONFIGFILE
+lxc.rootfs                              = $ROOTFS
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
 lxc.mount.entry                        = tmpfs $ROOTFS/dev/shm tmpfs nodev,nosuid,noexec,mode=1777,rw 0 0
 EOF
+fi
+
 if [ "$DIST" == 'gentoo' ]; then
-cat <<EOF > $CONFIGFILE
+cat <<EOF >> $CONFIGFILE
 lxc.mount.entry                        = portagetmp $ROOTFS/var/portage/tmp tmpfs rw,nosuid,nodev 0 0
 lxc.mount.entry                        = run $ROOTFS/run tmpfs rw,nosuid,nodev,relatime,mode=755 0 0
 EOF
 fi
 if [ "$DIST" == 'fedora' ]; then
-cat <<EOF > $CONFIGFILE
+cat <<EOF >> $CONFIGFILE
 lxc.mount.entry                        = devtmpfs $ROOTFS/dev devtmpfs defaults 0 0
 EOF
 fi
@@ -588,6 +596,8 @@ main()
 
 	# create config file
     create_lxc_config
+    
+    exit 0
     ## creating vm from template
     get_template
     set_suite_repository

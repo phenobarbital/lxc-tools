@@ -100,6 +100,7 @@ get_network_info() {
 		NET="0.0.0.0/$SUBNET"
 		IP="DHCP"
 	fi
+	
     # get mac-address
 	if [ -f /usr/lib/lxc-tools/macgen.py ]; then
 		MACADDR=`python /usr/lib/lxc-tools/macgen.py`
@@ -111,6 +112,7 @@ get_network_info() {
 	case "$NET_TYPE" in
 	'veth')
 NET_OPTIONS=$(cat <<EOF
+lxc.network.flags                       = up
 lxc.network.link                        = $BRIDGE
 lxc.network.hwaddr                      = $MACADDR
 lxc.network.ipv4                        = $NET
@@ -119,6 +121,7 @@ EOF
 ;;
 	'macvlan')
 NET_OPTIONS=$(cat <<EOF
+lxc.network.flags                       = up
 lxc.network.link                        = $IFACE
 lxc.network.hwaddr                      = $MACADDR
 lxc.network.ipv4                        = $NET
@@ -127,6 +130,7 @@ EOF
 ;;
 	'vlan')
 NET_OPTIONS=$(cat <<EOF
+lxc.network.flags                       = up
 lxc.network.link                        = $IFACE
 lxc.network.vlan.id                     = $VLAN_ID
 lxc.network.hwaddr                      = $MACADDR
@@ -137,7 +141,7 @@ EOF
 	'empty')
 		NET_OPTIONS='';;
 	'*')
-		error "invalid network configuration"
+		error "'$NET_TYPE' invalid network configuration"
 		exit 1;;
 	esac
 }
