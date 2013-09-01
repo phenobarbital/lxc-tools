@@ -3,27 +3,28 @@ lxc-tools
 
 LXC-tools son unas herramientas (Xen-tools-like) para crear plantillas Debian de LXC containers.
 
-LXC es un sistema de contenedores para virtualizar GNU/Linux en espacios aislados (isolated).
-Dentro de los contenedores reside otra versión de GNU/Linux, la cual:
-
- * Posee su propia interfaz de red
- * Se pueden aplicar cuotas de disco/CPU/RAM
- * Se pueden detener, apagar y/o suspender
-
 LXC-tools son un conjunto de scripts que permiten crear contenedores personalizados de GNU/Linux Debian (y otras distribuciones) dentro de un contenedor LXC.
 Están basados en las ideas de los Debian xen-tools, que permiten mediante roles, personalizar las aplicaciones dentro de un LXC-container.
 
-* Distribuciones soportadas:
+---
 
-- Debian (of course)
+lxc-tools are bash-scripts (Debian xen-tools-like) to create LXC containers for various distributions.
+You can define roles, post-scripts (hooks) and customize containers in an easy way.
+
+* Distributions:
+
+- Debian (of course) - Wheezy, Jessie, Sid
 - CentOS (6.x)
 - Gentoo (last stable stage3)
-- Fedora (> 16)
+- Fedora (> 16) (note: build but don't start, systemd start is incompatible with Debian Wheezy)
 - Canaima (> auyantepui)
+
+* coming soon:
 - ArchLinux (coming soon)
 - Ubuntu (coming soon)
+- Slack (coming soon)
 
-* Requerimientos
+* requirements
 
 - lxc
 - rsync
@@ -32,15 +33,19 @@ Están basados en las ideas de los Debian xen-tools, que permiten mediante roles
 - curl
 - wget
 
-* Requerimientos para otros tipos de contenedores:
+== How to install requirements
+
+apt-get install lxc rsync debootstrap lsb-release curl wget
+
+== Requirements for CentOS/Fedora Containers
+
+apt-get install yum rpm
+
+== Requirements for LVM-based or BTRFS-based containers
 
 - btrfs-tools (btrfs sub-volume containers)
 - lvm2 (lvm-based containers)
 
-* para construir contenedores CentOS se requiere adicionalmente:
-
-- yum
-- rpm
 
 Authors:
  Jesus Lara <jesuslarag@gmail.com>

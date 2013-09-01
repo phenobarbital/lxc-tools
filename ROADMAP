@@ -1,0 +1,30 @@
+=======
+Roadmap
+=======
+
+0.5.x
+=====
+
+Templates for:
+* Ubuntu
+* Slack
+* Busybox
+
+First functional roles for:
+* Debian Secure
+* Web Server
+* LDAP Server
+
+0.6.x
+=====
+
+* more functional roles
+* Converting openvz-templates > LXC containers
+* X.org tty out for a Container
+
+0.7.x
+=====
+
+* LXC on ARM!
+* android for LXC
+* firefox-OS for LXC
