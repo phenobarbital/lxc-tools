@@ -169,10 +169,9 @@ configure_debian()
 debian_devices()
 {
 	DEV="$ROOTFS/dev"
-	if [ ! -z "$ROOTFS" ]; then
-		rm -fR $DEV
+	if [ ! -d "$DEV" ]; then
+		mkdir -p $DEV
 	fi
-	mkdir -p $DEV
 	mknod -m 666 $DEV/tty c 5 0
     for tty in $(seq 0 4); do
 	if [ ! -e $DEV/tty$tty ]; then
@@ -192,11 +191,11 @@ debian_devices()
     rm -f $DEV/full
     mknod -m 666 $DEV/full c 1 7
     # added other devices
-    mknod -m 600 $DEV/initctl p
     mknod -m 666 $DEV/ptmx c 5 2
+    rm -fR $DEV/shm
     mkdir -m 1777 $DEV/shm
+    rm -fR $DEV/pts
     mkdir -m 755 $DEV/pts
-    mkdir -m 1777 $DEV/shm    
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
