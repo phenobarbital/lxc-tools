@@ -217,8 +217,6 @@ gentoo_inittab() {
 	rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
 	# we also disable the /etc/init.d/termencoding script which can cause errors
 	sed -i 's/^(\s*keyword .*)$/$1 -lxc/' ${ROOTFS}/etc/init.d/termencoding
-	# quiet login
-	# touch ${ROOTFS}/root/.hushlogin
 }
 
 try_gentoo_inittab() {
@@ -249,8 +247,8 @@ su0:S:wait:/sbin/rc single
 su1:S:wait:/sbin/sulogin
 
 1:2345:respawn:/sbin/agetty 115200 console linux
-c1:12345:respawn:/sbin/agetty 38400 tty1 linux
-c2:12345:respawn:/sbin/agetty 38400 tty2 linux
+# c1:12345:respawn:/sbin/agetty 38400 tty1 linux
+# c2:12345:respawn:/sbin/agetty 38400 tty2 linux
 # clean container shutdown on SIGPWR
 pf:12345:powerwait:/sbin/halt
 EOF

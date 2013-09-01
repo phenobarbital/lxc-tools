@@ -154,14 +154,11 @@ lxc.cgroup.memory.limit_in_bytes       = $MEMORY
 EOF
 if [ "$BACKEND_METHOD" == 'lvm' ]; then
 cat <<EOF >> $CONFIGFILE
-lxc.rootfs                              = $LVROOTFS
-lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
-lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
-lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
+lxc.rootfs                             = $LVROOTFS
 EOF
 else
 cat <<EOF >> $CONFIGFILE
-lxc.rootfs                              = $ROOTFS
+lxc.rootfs                             = $ROOTFS
 lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
 lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
 lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0

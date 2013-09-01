@@ -11,7 +11,7 @@
 # disable apt sources.list base
 sed -i 's/^deb/#deb/' $ROOTFS/etc/apt/sources.list
 
-cat <<E_O_APT > $ROOTFS/etc/apt/sources.list.d/debian.list
+cat <<E_O_APT > $ROOTFS/etc/apt/sources.list.d/canaima.list
 # oficial
 deb $MIRROR $SUITE main aportes
 E_O_APT
@@ -46,3 +46,8 @@ EOF
 #
 chroot $ROOTFS /usr/bin/apt-get update
 chroot $ROOTFS /usr/bin/apt-get upgrade -y
+
+#
+# install basic packages from Canaima
+#
+install_package canaima-base canaima-llaves lsb-base base-files

@@ -1,12 +1,12 @@
 #!/bin/bash
-# 10-disable-udev
+# 99-disable-udev
 #
 # disable udev and sysinit
 #
 
 # disable udev
-sed -i '/^\/sbin\/start_udev.*/s|^|#|' $ROOTFS/etc/rc.sysinit
-sed -i '/^\/sbin\/start_udev.*/s|^|#|' $ROOTFS/etc/rc.d/rc.sysinit
+sed -i 's/\/sbin\/start_udev/#\/sbin\/start_udev/' $ROOTFS/etc/rc.sysinit
+sed -i 's/\/sbin\/start_udev/#\/sbin\/start_udev/' $ROOTFS/etc/rc.d/rc.sysinit
 
 cat <<EOF >> $ROOTFS/etc/rc.d/rc.sysinit
 exit 0
