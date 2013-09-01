@@ -4,7 +4,7 @@
 # configure centos services
 #
 
-chroot $ROOTFS chkconfig udev-post off
+# enable services
 chroot $ROOTFS chkconfig network on
 chroot $ROOTFS chkconfig sshd on
 
@@ -31,7 +31,7 @@ perl -i -pe 's/1-6/1/' /etc/init/start-ttys.conf
 sed -i '115,126s/^/#/' $ROOTFS/etc/rc.d/init.d/halt
 
 # useless services
-for i in mdmonitor smartd haldaemon cups kdump rpcbind gpm nfslock sendmail netfs portmap rpcidmapd; do chkconfig $i off; done
+for i in udev-post ip6tables auditd mdmonitor smartd haldaemon cups kdump rpcbind gpm nfslock netfs portmap rpcidmapd; do chroot $ROOTFS chkconfig $i off; done
 
 
 # Restrict access to rsyslog configuration to root

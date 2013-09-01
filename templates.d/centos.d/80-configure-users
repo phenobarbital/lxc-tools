@@ -60,4 +60,4 @@ chmod u-w $ROOTFS/etc/sudoers
 chroot $ROOTFS /usr/sbin/usermod -G wheel $ACCOUNT
 
 # remove unwanted users
-for i in shutdown halt games operator ftp gopher; do userdel $i; done
+for i in shutdown halt games operator ftp gopher; do chroot $ROOTFS /usr/sbin/userdel $i; done
