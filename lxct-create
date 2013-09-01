@@ -191,7 +191,7 @@ EOF
 		fi
 		LVROOTFS="/dev/$LVM/$NAME"
 		lvdisplay $LVROOTFS > /dev/null 2>&1
-		if [ $? -ne 0 ]; then
+		if [ $? -eq 0 ]; then
 			error "error: $LVROOTFS already exists in vggroup $LVM" >&2
 			exit 1
 		fi
