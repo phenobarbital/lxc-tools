@@ -365,7 +365,7 @@ fedora_system()
 		chroot ${ROOTFS} ln -s /dev/null ${ETC}/fedora-readonly.service
 		chroot ${ROOTFS} rm -f ${ETC}/getty.target.wants/getty\@tty{2,3,4,5,6}.service
 		chroot ${ROOTFS} ln -s /dev/null ${ETC}/console-shell.service
-		chroot ${ROOTFS} cp ${LIB}/getty\@.service ${ETC}/getty\@.service
+		chroot ${ROOTFS} cp "$LIB/getty@.service" "$ETC/getty@.service"
 		chroot ${ROOTFS} sed -i 's/^BindTo/\#&/' ${ETC}/getty\@.service
 		chroot ${ROOTFS} ln -sf ${ETC}/getty\@.service ${ETC}/getty.target.wants/getty\@tty1.service
 		#dependency on a device unit fails it specially that we disabled udev

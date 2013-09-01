@@ -20,4 +20,4 @@ done
 chroot $ROOTFS /usr/bin/yum -y update
 
 # === basic packages
-chroot $ROOTFS /usr/bin/yum -y --enablerepo=epel lsof rsync screen htop bind-utils sysstat wget nc
+chroot $ROOTFS /usr/bin/yum -y --enablerepo=epel --nogpgcheck install lsof rsync screen htop bind-utils sysstat wget nc

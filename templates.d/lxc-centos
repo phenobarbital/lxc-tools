@@ -108,21 +108,22 @@ download_centos()
     $RPM --nodeps -ivh "${INSTALL_ROOT}/${RELEASE_FILE}"
     
     debug " - installing yum and rpm"
-	$YUM install rpm-build yum   
+	$YUM install rpm-build yum  
+	$YUM groupinstall core
     if [ $? -ne 0 ]; then
-	# download and install base system
-	PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
-	debug "Download noarch and core archives"
-	PKG_MIRROR=`wget -q --force-html --no-parent -O - ${MIRROR_URL}Packages/ | sed -n "/href/ s/.*href=['\"]\([^'\"]*\)['\"].*/\1/gp" | egrep -i ".rpm$" | egrep -i $PKG_BASE`
-	# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
-	for pkg in $PKG_MIRROR; do
+		# download and install base system
+		PKG_BASE="bash-4|basesystem-|^filesystem-|^setup-|rootfiles-|MAKEDEV-|initscripts-|ca-certificates-|tzdata-|hwdata-|^yum-3|^yum-plugin-fastestmirror-|^python-urlgrabber-|^python-iniparse-"
+		debug "Download noarch and core archives"
+		PKG_MIRROR=`wget -q --force-html --no-parent -O - ${MIRROR_URL}Packages/ | sed -n "/href/ s/.*href=['\"]\([^'\"]*\)['\"].*/\1/gp" | egrep -i ".rpm$" | egrep -i $PKG_BASE`
+		# PACKAGES=$(echo $PKG_MIRROR | egrep -i "$PKG_BASE")
+		for pkg in $PKG_MIRROR; do
 		PACKAGE=${MIRROR_URL}Packages/$pkg
 		debug " - downloading $pkg"
 		# wget -r -l1 --no-parent -A "$PKG_BASE" --directory-prefix="$YUM_CACHE" "${MIRROR_URL}Packages/"
 		wget -q -N --directory-prefix="$YUM_CACHE" -e robots=off --wait 1 $PACKAGE
-	done
-	# install all downloaded packages
-	$RPM -ivh --nodeps $YUM_CACHE/*.rpm
+		done
+		# install all downloaded packages
+		$RPM -ivh --nodeps $YUM_CACHE/*.rpm
 	fi
 	
     # Mount /dev (required for yum)
@@ -135,14 +136,15 @@ download_centos()
     # create a dummy resolvconf
     cp /etc/resolv.conf $INSTALL_ROOT/etc/resolv.conf
     
-	PKG_LIST="python rpm sudo rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
+	PKG_LIST="python plymouth rpm sudo rpm-python dhclient openssh-server passwd rsyslog vim-minimal vixie-cron wget which libxml2 gnupg2 glib2 gpgme libxml2-python pygpgme python-pycurl PyXML rsyslog  chkconfig policycoreutils openssh-clients openssl curl"
 	
     # instalar desde dentro de la chroot, garantiza su instalacion
     cp $INSTALL_ROOT/var/cache/yum/base/packages/* $INSTALL_ROOT/var/cache/yum/$ARCH/$SUITE/base/packages/
     debug "- Install all packages in chroot environment"
     chroot $INSTALL_ROOT rpm -ivh /centos-release-*.rpm
-    # chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates update yum rpm python
-    chroot $INSTALL_ROOT yum -y --nogpgcheck --disablerepo=updates install rpm-python rpm yum $PKG_LIST
+    # install everything
+    chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install rpm yum
+    chroot $INSTALL_ROOT /usr/bin/yum -y --disablerepo=updates --nogpgcheck install $PKG_LIST
     if [ $? -ne 0 ]; then
 		umount -f $INSTALL_ROOT/dev/
 		echo "Failed to download the rootfs, aborting."
@@ -223,7 +225,6 @@ USERCTL=yes
 PEERDNS=yes
 IPV6INIT=no
 TYPE=Ethernet
-MTU=$MTU
 EOF
 cat <<EOF >> $ROOTFS/etc/hosts
 # $HOSTNAME
@@ -243,7 +244,6 @@ USERCTL=yes
 PEERDNS=yes
 IPV6INIT=no
 TYPE=Ethernet
-MTU=$MTU
 EOF
 cat <<EOF >> $ROOTFS/etc/hosts
 # $HOSTNAME
@@ -264,17 +264,18 @@ centos_devices()
 {
 	DEV="$ROOTFS/dev"
 	mknod -m 666 $DEV/tty c 5 0
-    for tty in $(seq 1 4); do
+    for tty in $(seq 0 4); do
 	if [ ! -e $DEV/tty$tty ]; then
 	    mknod -m 666 $ROOTFS/dev/tty$tty c 4 $tty
 	fi
-    done	
+    done
+    mknod -m 666 $DEV/null c 1 3
     mknod -m 666 $DEV/zero c 1 5
     mknod -m 666 $DEV/random c 1 8
     mknod -m 666 $DEV/urandom c 1 9
-    rm -f ${DEV}/pts
+    rm -f $DEV/pts
     mkdir -m 755 $DEV/pts
-    rm -f ${DEV}/shm
+    rm -f $DEV/shm
     mkdir -m 1777 $DEV/shm
     mknod -m 600 $DEV/console c 5 1
     mknod -m 666 $DEV/full c 1 7
@@ -283,6 +284,19 @@ centos_devices()
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
     mount -o bind /sys "$ROOTFS/sys"
+    mknod -m 666 ${dev_path}/ptmx c 5 2
+    
+    sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
+    sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
+    # don't mount devpts, for pete's sake
+    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
+    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+ 
+    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
+
+    sed -i '115,126s/^/#/' $ROOTFS/etc/rc.d/init.d/halt    
 }
 
 centos_inittab() {
@@ -303,6 +317,10 @@ c1:12345:respawn:/sbin/getty 38400 tty1 linux
 c2:12345:respawn:/sbin/getty 38400 tty2 linux
 c3:12345:respawn:/sbin/getty 38400 tty3 linux
 c4:12345:respawn:/sbin/getty 38400 tty4 linux
+EOF
+# configure a minimal fstab for container
+cat <<EOF > $ROOTFS/etc/fstab
+/dev/root             /                       rootfs  defaults        0 0
 EOF
 }
 
