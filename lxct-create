@@ -206,19 +206,10 @@ EOF
 				error "error formatting $LVROOTFS with $FS filesystem, aborted" >&2
 				exit 1
 		fi
+		debug " - mounting $LVROOTFS in $ROOTFS"
+		mount $LVROOTFS $ROOTFS
   fi
   return 0
-}
-
-mount_lvm()
-{
-	if [ "$BACKEND_METHOD" = 'lvm' ]; then
-		debug " - mounting $LVROOTFS in $ROOTFS"
-		# mount LVROOTFS in ROOTFS
-		if [ -f "$LVROOTFS" ]; then
-			mount -t $FS $LVROOTFS $ROOTFS
-		fi
-	fi
 }
 
 umount_lvm()
@@ -587,7 +578,6 @@ main()
 	"lvm")
 		# mount LVM volume
 		create_lvm_volume
-		mount_lvm
 		touch_config
 		;;
 	"*")

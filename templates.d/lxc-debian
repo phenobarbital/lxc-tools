@@ -195,8 +195,8 @@ debian_devices()
     mknod -m 600 ${DEV}/initctl p
     mknod -m 666 ${DEV}/ptmx c 5 2
     mkdir -m 1777 ${DEV}/shm
-    mkdir -m 755 $DEV/pts
-    mkdir -m 1777 $DEV/shm    
+    mkdir -m 755 ${DEV}/pts
+    mkdir -m 1777 ${DEV}/shm    
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
