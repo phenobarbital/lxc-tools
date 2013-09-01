@@ -15,15 +15,6 @@ else
     . ./lib/netinfo.sh
 fi
 
-#
-#  library for logging facility
-#
-if [ -e /usr/lib/lxc-tools/logging.sh ]; then
-    . /usr/lib/lxc-tools/logging.sh
-else
-    . ./lib/logging.sh
-fi
-
 # verify if cgroup is enabled
 cgroup=`cat /proc/self/mounts | grep cgroup`
 if [ -z "$cgroup" ]; then
@@ -49,6 +40,18 @@ if [ -z "$BACKEND_METHOD" ]; then
 	BACKEND_METHOD='dir'
 fi
 
+# defined DIR variable
+# directory method
+if [ "$DIR" = "auto" ]; then
+	DIR=`get_lxcpath`
+elif [ -z "$DIR" ]; then
+	DIR=`get_lxcpath`
+fi
+if [ ! -d "$DIR" ]; then
+	error "directory $DIR does not exists, aborted"
+	exit 1
+fi
+
 if [ "$BACKEND_METHOD" = 'lvm' ]; then
 	# get volume group
 	if [ "$LVM" = "auto" ]; then
@@ -71,15 +74,7 @@ if [ "$BACKEND_METHOD" = 'lvm' ]; then
         exit 1
     fi
 #elif [ "$BACKEND_METHOD" = 'btrfs' ]; then
-# TODO
-else
-# directory method
-	# get directory info
-	if [ "$DIR" = "auto" ]; then
-		DIR=`get_lxcpath`
-	elif [ -z "$DIR" ]; then
-		DIR=`get_lxcpath`
-	fi
+#TODO
 fi
 
 # get network information
@@ -190,6 +185,9 @@ elif [ "$NET_TYPE" = "phys" ]; then
 		error "cannot configure physical network, interface required (use --iface option)"
 		exit 1
 	fi
+elif [ "$NET_TYPE" = "empty" ]; then
+	# no network available
+	NETWORK='0.0.0.0'
 fi
 
 # get distribution only if $DIST is not defined

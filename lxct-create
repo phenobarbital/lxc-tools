@@ -213,6 +213,7 @@ EOF
 mount_lvm()
 {
 	if [ "$BACKEND_METHOD" = 'lvm' ]; then
+		debug " - mounting $LVROOTFS in $ROOTFS"
 		# mount LVROOTFS in ROOTFS
 		if [ -f "$LVROOTFS" ]; then
 			mount -t $FS $LVROOTFS $ROOTFS
@@ -224,6 +225,7 @@ umount_lvm()
 {
 	if [ "$BACKEND_METHOD" = 'lvm' ]; then
 		#umount 
+		debug " - unmounting $LVROOTFS"
 		umount -f $LVROOTFS
 	fi
 }
@@ -241,6 +243,10 @@ make_rootfs() {
 	# create directory
     if [ ! -f "$ROOTFS" ]; then
 		mkdir -p $ROOTFS
+		if [ $? -ne 0 ]; then
+			error "error creating $ROOTFS folder" >&2
+			exit 1
+		fi		
 		debug "- created rootfs folder $ROOTFS -"
     fi
 }
@@ -333,7 +339,10 @@ check_backend()
 
 check_net()
 {
-	if [[ "$1" = "veth" || "$1" = "macvlan" || "$1" = "vlan" || "$1" = "phys" || "$1" = "empty" ]]; then
+	if [[ "$1" = "veth" ]] || [[ "$1" = "empty" ]] || [[ "$1" = "macvlan" ]] || [[ "$1" = "vlan" ]] || [[ "$1" = "phys" ]]; then
+		# TODO: check network options
+		return 0
+	else
 		usage_err "option '$1' invalid network option"
 	fi
 }
@@ -552,6 +561,8 @@ main()
 	CONFIG="$DIR/$NAME"
     ROOTFS="$CONFIG/rootfs"
     CONFIGFILE="$CONFIG/config"
+    
+    debug $CONFIG
     
 	# network configuration
 	get_network_info

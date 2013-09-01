@@ -15,6 +15,15 @@ export YELLOW='\033[1;33m'
 export WHITE='\033[1;37m'
 export BLUE='\033[1;34m'
 
+#
+#  library for logging facility
+#
+if [ -e /usr/lib/lxc-tools/logging.sh ]; then
+    . /usr/lib/lxc-tools/logging.sh
+else
+    . ./lib/logging.sh
+fi
+
 get_version() 
 {
 	echo "LXC-tools version $VERSION";
