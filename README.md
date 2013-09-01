@@ -12,7 +12,7 @@ lxc-tools are bash-scripts (Debian xen-tools-like) to create LXC containers for 
 You can define roles, post-scripts (hooks) and customize containers in an easy way.
 
 Distributions:
-====
+--------------
 
 - Debian (of course) - Wheezy, Jessie, Sid
 - CentOS (6.x)
@@ -36,17 +36,17 @@ Requirements
 - wget
 
 How to install requirements
-====
+--------------
 
 apt-get install lxc rsync debootstrap lsb-release curl wget
 
 Requirements for CentOS/Fedora Containers
-====
+--------------
 
 apt-get install yum rpm
 
 Requirements for LVM-based or BTRFS-based containers
-====
+--------------
 
 - btrfs-tools (btrfs sub-volume containers)
 - lvm2 (lvm-based containers)
