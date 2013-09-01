@@ -3,7 +3,7 @@
 # LXC-tools: Appliance and LXC container builder for Debian GNU/Linux (and derivatives)
 #
 # Copyright © 2010 Jesús Lara Giménez (phenobarbital) <jesuslara@devel.com.ve>>
-# Version: 0.4
+# Version: 0.5
 #
 #    Developed by Jesus Lara (phenobarbital) <jesuslara@phenobarbital.info>
 #    https://github.com/phenobarbital/lxc-tools
@@ -34,12 +34,21 @@ else
 fi
 
 #
+#  all common functions (for all templates)
+#
+if [ -e /usr/lib/lxc-tools/lxct_common.sh ]; then
+    . /usr/lib/lxc-tools/lxct_common.sh
+else
+    . ./lib/lxct_common.sh
+fi
+
+#
 #  fill all "auto" variables and check configuration
 #
-if [ -e /usr/lib/lxc-tools/config.sh ]; then
-    . /usr/lib/lxc-tools/config.sh
+if [ -e /usr/lib/lxc-tools/lxct_config.sh ]; then
+    . /usr/lib/lxc-tools/lxct_config.sh
 else
-    . ./lib/config.sh
+    . ./lib/lxct_config.sh
 fi
 
 # get general info about LXC

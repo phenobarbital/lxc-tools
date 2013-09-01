@@ -3,7 +3,7 @@
 # LXC-tools: Appliance and LXC container builder for Debian GNU/Linux (and derivatives)
 #
 # Copyright © 2010 Jesús Lara Giménez (phenobarbital) <jesuslara@devel.com.ve>>
-# Version: 0.4    
+# Version: 0.5    
 #
 #    Developed by Jesus Lara (phenobarbital) <jesuslara@phenobarbital.info>
 #    https://github.com/phenobarbital/lxc-tools
@@ -17,7 +17,7 @@
 # ================================================================================
 
 ###
-# netinfo
+# lxct_netinfo
 # get network information
 ##
 

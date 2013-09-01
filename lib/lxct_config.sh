@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-#  /usr/lib/lxc-tools/config.sh
+#  /usr/lib/lxc-tools/lxct_config.sh
 #
 #  Fill all basic variable automagically
 #
@@ -9,10 +9,10 @@
 #
 #  library for network configuration
 #
-if [ -e /usr/lib/lxc-tools/netinfo.sh ]; then
-    . /usr/lib/lxc-tools/netinfo.sh
+if [ -e /usr/lib/lxc-tools/lxct_netinfo.sh ]; then
+    . /usr/lib/lxc-tools/lxct_netinfo.sh
 else
-    . ./lib/netinfo.sh
+    . ./lib/lxct_netinfo.sh
 fi
 
 # verify if cgroup is enabled

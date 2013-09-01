@@ -8,7 +8,7 @@ LXC-tools TODO list
 * Export LXC container
 * Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
-* LVM creation functionality
+* LVM creation functionality (ready)
 * BTRFS creation functionality
 * role for Debian hardening (install psad,shorewall,portsentry,fail2ban)
 * various functional roles (ex: web server)
@@ -16,3 +16,5 @@ LXC-tools TODO list
 * crear un LXC-container a partir de una vps openvz (backup)
 * crear un LXC-application-container
 * Crear rol para un application-container lxct-app (ej: bind-chroot)
+* Working hooks.d directory
+* Rename scripts in lib/ directory (for using lxct- prefix)

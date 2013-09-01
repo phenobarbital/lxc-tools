@@ -6,6 +6,7 @@
 ##
 #
 # debootstrap debian install
+# Version: 0.5
 #
 # based on:
 # Daniel Lezcano <daniel.lezcano@free.fr>

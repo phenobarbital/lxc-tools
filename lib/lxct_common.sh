@@ -1,12 +1,12 @@
 #!/bin/bash
 ##
-#  /usr/lib/lxc-tools/common.sh
+#  /usr/lib/lxc-tools/lxct_common.sh
 #
 #  Common shell functions which may be used by any lxc template
 #
 ##
 
-VERSION='0.4'
+VERSION='0.5'
 
 export NORMAL='\033[0m'
 export RED='\033[1;31m'
@@ -18,10 +18,10 @@ export BLUE='\033[1;34m'
 #
 #  library for logging facility
 #
-if [ -e /usr/lib/lxc-tools/logging.sh ]; then
-    . /usr/lib/lxc-tools/logging.sh
+if [ -e /usr/lib/lxc-tools/lxct_logging.sh ]; then
+    . /usr/lib/lxc-tools/lxct_logging.sh
 else
-    . ./lib/logging.sh
+    . ./lib/lxct_logging.sh
 fi
 
 get_version() 
