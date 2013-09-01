@@ -195,7 +195,7 @@ EOF
 			error "$(basename $0) error: $LVROOTFS already exists in vggroup $LVM" >&2
 			exit 1
 		fi
-		$LVCREATE -n $NAME --size $SIZE $LVM
+		$LVCREATE -n $NAME --size $SIZE $LVM 2>&1
 		if [ $? -eq 0 ]; then
 			error "$(basename $0) error creating $LVROOTFS in vggroup $LVM, aborted" >&2
 			exit 1
@@ -208,6 +208,7 @@ EOF
 			exit 1
 		fi
   fi
+  return 0
 }
 
 mount_lvm()
