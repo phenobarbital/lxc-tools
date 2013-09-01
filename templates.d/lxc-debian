@@ -209,8 +209,19 @@ debian_devices()
 debian_inittab() {
 	# create a minimal inittab
 cat <<EOF > $ROOTFS/etc/inittab
-id:3:initdefault:
+# /etc/inittab: init(8) configuration.
+# The default runlevel.
+id:2:initdefault:
+# This is run first except when booting in emergency (-b) mode.
 si::sysinit:/etc/init.d/rcS
+# What to do in single-user mode.
+~~:S:wait:/sbin/sulogin
+# /etc/init.d executes the S and K scripts upon change
+# of runlevel.
+# Runlevel 0 is halt.
+# Runlevel 1 is single-user.
+# Runlevels 2-5 are multi-user.
+# Runlevel 6 is reboot.
 l0:0:wait:/etc/init.d/rc 0
 l1:1:wait:/etc/init.d/rc 1
 l2:2:wait:/etc/init.d/rc 2
@@ -220,11 +231,8 @@ l5:5:wait:/etc/init.d/rc 5
 l6:6:wait:/etc/init.d/rc 6
 # Normally not reached, but fallthrough in case of emergency.
 z6:6:respawn:/sbin/sulogin
+# /sbin/getty invocations for the runlevels.
 1:2345:respawn:/sbin/getty 38400 console
-c1:12345:respawn:/sbin/getty 38400 tty1 linux
-c2:12345:respawn:/sbin/getty 38400 tty2 linux
-c3:12345:respawn:/sbin/getty 38400 tty3 linux
-c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
