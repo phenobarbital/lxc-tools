@@ -178,8 +178,7 @@ fi
 
 # get volume and create lvm volume
 function create_lvm_volume() {
-	if [ "$FS_METHOD" = 'btrfs' ]; then
-		get_size
+	if [ "$BACKEND_METHOD" = 'lvm' ]; then
 cat <<EOF
   Volume Group: $LVM
   LVM Name : $NAME
@@ -213,7 +212,7 @@ EOF
 
 mount_lvm()
 {
-	if [ "$FS_METHOD" = 'lvm' ]; then
+	if [ "$BACKEND_METHOD" = 'lvm' ]; then
 		# mount LVROOTFS in ROOTFS
 		if [ -f "$LVROOTFS" ]; then
 			mount -t $FS $LVROOTFS $ROOTFS
@@ -223,7 +222,7 @@ mount_lvm()
 
 umount_lvm()
 {
-	if [ "$FS_METHOD" = 'lvm' ]; then
+	if [ "$BACKEND_METHOD" = 'lvm' ]; then
 		#umount 
 		umount -f $LVROOTFS
 	fi
@@ -231,7 +230,7 @@ umount_lvm()
 
 create_btrfs_volume() {
 	#TODO
-	if [ "$FS_METHOD" = 'btrfs' ]; then
+	if [ "$BACKEND_METHOD" = 'btrfs' ]; then
 		get_size
 		debug "create a sub-volume via btrfs"
 	fi

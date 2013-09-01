@@ -204,7 +204,7 @@ if [ -z "$DIST" ] || [ "$DIST" = 'auto' ]; then
 fi
 
 # define default size, if $SIZE is not defined
-if [ -z "$SIZE" ]; then
+if [ -z "$SIZE" ] || [ "$SIZE" = 'auto' ]; then
 	SIZE=$DEFAULT_SIZE
 fi
 
