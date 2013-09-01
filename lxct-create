@@ -201,15 +201,10 @@ EOF
 			exit 1
 		fi
 		# volume format
-		if [ -f "$LVROOTFS" ]; then
-			/sbin/mkfs.$FS -L $NAME $LVROOTFS
-			if [ $? -ne 0 ]; then
+		/sbin/mkfs.$FS -L $NAME $LVROOTFS
+		if [ $? -ne 0 ]; then
 				error "error formatting $LVROOTFS with $FS filesystem, aborted" >&2
 				exit 1
-			fi
-		else
-			error "error: $LVROOTFS not created"
-			exit 1
 		fi
   fi
   return 0
