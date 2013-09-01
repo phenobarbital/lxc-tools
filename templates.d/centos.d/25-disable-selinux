@@ -8,4 +8,4 @@ mkdir -p $ROOTFS/selinux
 echo 0 > $ROOTFS/selinux/enforce
 
 # disable selinux
-sed -i.orig -e "s/enforcing/disabled/" /etc/sysconfig/selinux
+sed -i.orig -e "s/enforcing/disabled/" $ROOTFS/etc/sysconfig/selinux
