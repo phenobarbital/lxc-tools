@@ -12,7 +12,34 @@ chroot $ROOTFS chkconfig sshd on
 chroot $ROOTFS chkconfig --levels 2345 sendmail off
 
 # blacklist ipv6
-cat <<EOF >> $ROOTFS/etc/modprobe.d/blacklist
+cat <<EOF >> $ROOTFS/etc/modprobe.d/blacklist.conf
 blacklist ipv6
 blacklist net-pf-10
 EOF
+
+# disable usb module
+echo "blacklist usb-storage" > /etc/modprobe.d/blacklist-usbstorage.conf
+
+# disable BOOT prompt
+sed -i 's/PROMPT=yes/PROMPT=no/' $ROOTFS/etc/sysconfig/init
+
+# Change the number of available gettys as there is too much of them available by default.
+
+perl -i -pe 's/1-6/1/' /etc/sysconfig/init
+perl -i -pe 's/1-6/1/' /etc/init/start-ttys.conf
+
+sed -i '115,126s/^/#/' $ROOTFS/etc/rc.d/init.d/halt
+
+# useless services
+for i in mdmonitor smartd haldaemon cups kdump rpcbind gpm nfslock sendmail netfs portmap rpcidmapd; do chkconfig $i off; done
+
+
+# Restrict access to rsyslog configuration to root
+chmod 600 $ROOTFS/etc/rsyslog.conf
+
+# Locking down LNX00440
+chmod 640 $ROOTFS/etc/security/access.conf
+
+# Sysctl configuration should only accessible to root
+chmod 600 $ROOTFS/etc/sysctl.conf
+

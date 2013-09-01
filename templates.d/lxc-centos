@@ -284,19 +284,7 @@ centos_devices()
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
     mount -o bind /sys "$ROOTFS/sys"
-    mknod -m 666 ${dev_path}/ptmx c 5 2
-    
-    sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.sysinit
-    sed -i 's|.sbin.start_udev||' $ROOTFS/etc/rc.d/rc.sysinit
-    # don't mount devpts, for pete's sake
-    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.sysinit
-    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
- 
-    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
-    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
-    sed -i 's/^.*dev.pts.*$/#\0/' $ROOTFS/etc/rc.d/rc.sysinit
-
-    sed -i '115,126s/^/#/' $ROOTFS/etc/rc.d/init.d/halt    
+    mknod -m 666 $DEV/ptmx c 5 2 
 }
 
 centos_inittab() {
@@ -313,14 +301,17 @@ l6:6:wait:/etc/init.d/rc 6
 # Normally not reached, but fallthrough in case of emergency.
 z6:6:respawn:/sbin/sulogin
 1:2345:respawn:/sbin/getty 38400 console
-c1:12345:respawn:/sbin/getty 38400 tty1 linux
-c2:12345:respawn:/sbin/getty 38400 tty2 linux
-c3:12345:respawn:/sbin/getty 38400 tty3 linux
-c4:12345:respawn:/sbin/getty 38400 tty4 linux
+#c1:12345:respawn:/sbin/getty 38400 tty1 linux
+#c2:12345:respawn:/sbin/getty 38400 tty2 linux
+#c3:12345:respawn:/sbin/getty 38400 tty3 linux
+#c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
-/dev/root             /                       rootfs  defaults        0 0
+/dev/root             /       rootfs defaults        0 0
+proc            /proc         proc   nodev,noexec,nosuid 0 0
+sysfs           /sys          sysfs  defaults  0 0
+none            /dev/pts      devpts defaults 0 0
 EOF
 }
 

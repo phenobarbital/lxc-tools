@@ -58,3 +58,6 @@ chmod u-w $ROOTFS/etc/sudoers
 
 # add user to sudo group
 chroot $ROOTFS /usr/sbin/usermod -G wheel $ACCOUNT
+
+# remove unwanted users
+for i in shutdown halt games operator ftp gopher; do userdel $i; done
