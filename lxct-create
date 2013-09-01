@@ -118,7 +118,7 @@ lxc.cap.drop                            = $CAPABILITIES
 
 ## Devices
 # Allow all devices
-#lxc.cgroup.devices.allow               = a
+lxc.cgroup.devices.allow               = a
 # Deny all devices
 lxc.cgroup.devices.deny                 = a
 # Allow to mknod all devices (but not using them)
@@ -155,6 +155,9 @@ EOF
 if [ "$BACKEND_METHOD" == 'lvm' ]; then
 cat <<EOF >> $CONFIGFILE
 lxc.rootfs                              = $LVROOTFS
+lxc.mount.entry                        = proc $ROOTFS/proc proc nodev,noexec,nosuid 0 0
+lxc.mount.entry                        = sysfs $ROOTFS/sys sysfs defaults,ro 0 0
+lxc.mount.entry                        = devpts $ROOTFS/dev/pts devpts gid=5,mode=620,newinstance,ptmxmode=0666 0 0
 EOF
 else
 cat <<EOF >> $CONFIGFILE
