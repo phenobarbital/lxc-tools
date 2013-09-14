@@ -1,0 +1,68 @@
+#!/bin/bash
+# 15-configure-upstart
+#
+# configure upstart
+#
+
+cat <<EOF > $ROOTFS/lib/init/fstab
+#
+# These are the filesystems that are always mounted on boot, you can
+# override any of these by copying the appropriate line from this file into
+# /etc/fstab and tweaking it as you see fit.  See fstab(5).
+#
+# <file system> <mount point>             <type>          <options>                    <dump> <pass>
+/dev/root       /                         rootfs          defaults                          0 1
+#none            /proc                     proc            nodev,noexec,nosuid               0 0
+none            /proc/sys/fs/binfmt_misc  binfmt_misc     nodev,noexec,nosuid,optional      0 0
+#none            /sys                      sysfs           nodev,noexec,nosuid               0 0
+none            /sys/fs/fuse/connections  fusectl         optional                          0 0
+none            /sys/kernel/debug         debugfs         optional                          0 0
+none            /sys/kernel/security      securityfs      optional                          0 0
+none            /spu                      spufs           gid=spu,optional                  0 0
+#none            /dev                      devtmpfs,tmpfs  mode=0755                         0 0
+none            /dev/pts                  devpts          noexec,nosuid,gid=tty,mode=0620   0 0
+none            /dev/shm                  tmpfs           nosuid,nodev                      0 0
+none            /tmp                      none            defaults                          0 0
+none            /var/run                  tmpfs           mode=0755,nosuid,showthrough      0 0
+none            /var/lock                 tmpfs           nodev,noexec,nosuid,showthrough   0 0
+none            /lib/init/rw              tmpfs           mode=0755,nosuid,optional         0 0
+EOF
+
+
+sed -i 's/start on filesystem and net-device-up IFACE=lo/start on filesystem #and net-device-up IFACE=lo/' $ROOTFS/etc/init/rc-sysinit.conf
+
+cat <<EOF > $ROOTFS/etc/init/lxc.conf
+# LXC – Fix init sequence to have LXC containers boot with upstart
+
+# description “Fix LXC container”
+
+start on startup
+
+task
+pre-start script
+mount -t proc proc /proc
+mount -t devpts devpts /dev/pts
+mount -t sysfs sys /sys
+mount -t tmpfs varrun /var/run
+mount -t tmpfs varlock /var/lock
+mkdir -p /var/run/network
+touch /var/run/utmp
+chmod 664 /var/run/utmp
+chown root.utmp /var/run/utmp
+if [ "$(find /etc/network/ -name upstart -type f)" ]; then
+chmod -x /etc/network/*/upstart || true
+fi
+end script
+
+script
+start networking
+initctl emit filesystem --no-wait
+initctl emit local-filesystems --no-wait
+initctl emit virtual-filesystems --no-wait
+init 2
+end script
+EOF
+
+mkdir -p $ROOTFS/var/run/network
+touch $ROOTFS/var/run/network/ifstate
+mkdir -p $ROOTFS/var/run/sshd

@@ -6,7 +6,10 @@
 
 # remove pointless services in a container
 chroot $ROOTFS /usr/sbin/update-rc.d -f ondemand remove
-
+chroot $ROOTFS /usr/sbin/update-rc.d -f umountfs remove
+chroot $ROOTFS /usr/sbin/update-rc.d -f hwclock.sh remove
+chroot $ROOTFS /usr/sbin/update-rc.d -f hwclockfirst.sh remove
+    
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls u*.conf); do mv $f $f.orig; done'
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls tty[2-9].conf); do mv $f $f.orig; done'
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls plymouth*.conf); do mv $f $f.orig; done'

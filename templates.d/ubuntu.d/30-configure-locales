@@ -7,6 +7,7 @@
 #
 #  Install locales
 #
+install_package language-pack-en  language-pack-es
 install_package locales
 install_package util-linux-locales
 
@@ -16,7 +17,7 @@ LANG=$(locale | grep "LANG=" | cut -d "=" -f2)
 #
 # define locales
 #
-chroot $ROOTFS /usr/sbin/update-locale LANG=C
+chroot $ROOTFS /usr/sbin/update-locale LANG="en_US.UTF-8" LANGUAGE="en_US.UTF-8" LC_ALL="en_US.UTF-8"
 
 #
 # Default to the same locale as the host.

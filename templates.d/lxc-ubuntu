@@ -43,7 +43,7 @@ download_ubuntu()
     fi
     
     # extra packages for Ubuntu minimal
-    extra_packages=dialog,apt,apt-utils,iproute,inetutils-ping,vim,isc-dhcp-client,isc-dhcp-common,ssh,lsb-release,gnupg,netbase,ubuntu-keyring
+    extra_packages=dialog,apt,apt-utils,iproute,inetutils-ping,vim,isc-dhcp-client,isc-dhcp-common,ssh,lsb-release,gnupg,netbase,ubuntu-minimal,ubuntu-keyring
     
     message "Downloading Ubuntu minimal ..."
     debootstrap --verbose --components=main,universe --arch=$arch --include $extra_packages \
@@ -219,19 +219,6 @@ ubuntu_devices()
     # remove jobs for consoles 5 and 6 since we only create 4 consoles in
     # this template
     rm -f $ROOTFS/etc/init/tty{5,6}.conf
-    # provide the lxc service
-    cat <<EOF > $ROOTFS/etc/init/lxc.conf
-# fake some events needed for correct startup other services
-description     "Container Upstart"
-start on startup
-script
-        rm -rf /var/run/*.pid
-        rm -rf /var/run/network/*
-        /sbin/initctl emit stopped JOB=udevtrigger --no-wait
-        /sbin/initctl emit started JOB=udev --no-wait
-end script
-EOF
-
     return 0
 }
 
@@ -268,8 +255,9 @@ EOF
 # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
 /dev/root             /       rootfs defaults        0 0
-proc            /proc         proc   nodev,noexec,nosuid 0 0
-sysfs           /sys          sysfs  defaults  0 0
+tmpfs  		/dev/shm   tmpfs  defaults  0 0
+proc        /proc         proc   nodev,noexec,nosuid 0 0
+sysfs       /sys          sysfs  defaults  0 0
 EOF
 }
 
@@ -308,7 +296,6 @@ create_container()
 		error "Failed to Configure Ubuntu Minimal"
 		return 1
     fi
-    cleanup_container
 	info "Ubuntu $SUITE LXC Container created"
 	return 0
 }

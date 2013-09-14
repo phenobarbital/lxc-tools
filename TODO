@@ -1,8 +1,9 @@
 LXC-tools TODO list
 -------------------
 
-* Ubuntu, ArchLinux, Progress and Busybox templates
+* Ubuntu (ready), ArchLinux, Progress and Busybox templates
 * Check if container exists (name, directory, etc)
+* If none name passed, generated automatically (show in dialog "auto")
 * Check directory name (check_name) using a regex
 * Save LXC-container as a template (tar.gz)
 * Export LXC container
@@ -41,4 +42,17 @@ tar xfz /centos-lxc-root.tgz --numeric-owner
 # rm /etc/mtab
 # touch /etc/mtab
 
+* create a revert operation with trap
 
+revert()
+{
+    echo "Interrupted, so cleaning up"
+    lxc-destroy -n $name
+    # maybe was interrupted before copy config
+    rm -rf $path
+    rm -rf $default_path/$name
+    echo "exiting..."
+    exit 1
+}
+
+trap revert SIGHUP SIGINT SIGTERM
