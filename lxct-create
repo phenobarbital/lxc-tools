@@ -253,7 +253,7 @@ create_btrfs_volume() {
 			exit 1
 		fi
 		# test if sub-volume not exists
-		id=btrfs subvolume list $DIR | grep $NAME | grep ID | awk '{print $2}'
+		id=`btrfs subvolume list $DIR | grep $NAME | grep ID | awk '{print $2}'`
 		if [ $id -ne 0 ]; then
 			error "error: sub-volume $NAME already exists in $DIR with ID $id, aborted" >&2
 			exit 1
@@ -601,7 +601,11 @@ main()
 	show_summary
 
 	# TODO, ¿pedir confirmación para proceder luego del sumario?
-
+	read -p "Continue (y/n)?" WORK
+	if [ "$WORK" != "y" ]; then
+		exit 0
+	fi
+	
 	case "$BACKEND_METHOD" in
 	"btrfs")
 		#TODO: no options yet
