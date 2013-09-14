@@ -34,9 +34,11 @@ download_ubuntu()
 	else
 		arch='i686'
 	fi
-    mkdir -p "$CACHE/$SUITE/partial-$arch"
+	cachedir="$CACHE/$DIST/$SUITE"
+	
+    mkdir -p "$cachedir/partial-$arch"
     if [ $? -ne 0 ]; then
-       	error "Failed to create '$CACHE/$SUITE/partial-$arch' directory"
+       	error "Failed to create '$cachedir/partial-$arch' directory"
        	return 1
     fi
     
@@ -45,15 +47,15 @@ download_ubuntu()
     
     message "Downloading Ubuntu minimal ..."
     debootstrap --verbose --components=main,universe --arch=$arch --include $extra_packages \
-        $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
+        $SUITE $cachedir/partial-$arch $MIRROR
     RESULT=$?
 
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
-       rm -fR "$CACHE/$SUITE/partial-$arch"
+       rm -fR "$cachedir/partial-$arch"
        return 1
     fi
-    mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
+    mv "$cachedir/partial-$arch" "$cachedir/rootfs-$arch"
     info "Download $DIST $SUITE complete."
     return 0
 }
@@ -66,8 +68,9 @@ copy_ubuntu()
 	else
 		arch='i686'
 	fi	
-    info "Copying rootfs to $ROOTFS..."
-    rsync -aqzpHSW $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
+	cachedir="$CACHE/$DIST/$SUITE"
+    info "Copying cache rootfs to $ROOTFS..."
+    rsync -aqzpHSW $cachedir/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
         exit 1
@@ -85,21 +88,23 @@ install_ubuntu()
             exit 1
         fi
         
+        # TODO: add multi-arch support
 		if [ "$ARCH" = 'x86_64' ]; then
 			arch='amd64'
 		else
 			arch='i686'
 		fi	        
+		cachedir="$CACHE/$DIST/$SUITE"
 		
         # cleaning cache of mini ubuntu
         if [ "$CLEAN_CACHE" -eq "1" ]; then
-			message "Cache found in $CACHE/$SUITE/rootfs-$arch. clearing ..."
-			rm -fR $CACHE/$SUITE/rootfs-$arch
+			message "Cache found in $cachedir/rootfs-$arch. clearing ..."
+			rm -fR $cachedir/rootfs-$arch
         fi
         
         # check the mini ubuntu was not already downloaded
-        message "Checking cache download in $CACHE/$SUITE/rootfs-$arch ... "
-        if [ ! -e "$CACHE/$SUITE/rootfs-$arch" ]; then
+        message "Checking cache download in $cachedir/rootfs-$arch ... "
+        if [ ! -e "$cachedir/rootfs-$arch" ]; then
             download_ubuntu
             if [ $? -ne 0 ]; then
                 error "Failed to download Ubuntu Suite"

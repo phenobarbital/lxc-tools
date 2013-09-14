@@ -31,24 +31,25 @@ download_debian()
 		arch='amd64'
 	else
 		arch='i386'
-	fi	
-    mkdir -p "$CACHE/$SUITE/partial-$arch"
+	fi
+	cachedir="$CACHE/$DIST/$SUITE"
+    mkdir -p "$cachedir/partial-$arch"
     if [ $? -ne 0 ]; then
-       	error "Failed to create '$CACHE/$SUITE/partial-$arch' directory"
+       	error "Failed to create '$cachedir/partial-$arch' directory"
        	return 1
     fi
     # download a mini debian into a cache    
     message "Downloading Debian minimal ..."
     debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES \
-        $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
+        $SUITE $cachedir/partial-$arch $MIRROR
     RESULT=$?
 
     if [ "$RESULT" != "0" ]; then
        error "Failed to download the rootfs, aborting."
-       rm -fR "$CACHE/$SUITE/partial-$arch"
+       rm -fR "$cachedir/partial-$arch"
        return 1
     fi
-    mv "$CACHE/$SUITE/partial-$arch" "$CACHE/$SUITE/rootfs-$arch"
+    mv "$cachedir/partial-$arch" "$cachedir/rootfs-$arch"
     info "Download $DIST $SUITE complete."
     return 0
 }
@@ -60,9 +61,10 @@ copy_debian()
 		arch='amd64'
 	else
 		arch='i386'
-	fi	
+	fi
+	cachedir="$CACHE/$DIST/$SUITE"
     info "Copying rootfs to $ROOTFS..."
-    rsync -aqzpHSW $CACHE/$SUITE/rootfs-$arch/* $ROOTFS/ || return 1
+    rsync -aqzpHSW $cachedir/rootfs-$arch/* $ROOTFS/ || return 1
     if [ $? -ne 0 ]; then
 		error "Failed to copy rootfs"
         exit 1
@@ -85,16 +87,17 @@ install_debian()
 		else
 			arch='i386'
 		fi	        
+		cachedir="$CACHE/$DIST/$SUITE"
 		
         # cleaning cache of mini debian
         if [ "$CLEAN_CACHE" -eq "1" ]; then
-			message "Cache found in $CACHE/$SUITE/rootfs-$arch. clearing ..."
-			rm -fR $CACHE/$SUITE/rootfs-$arch
+			message "Cache found in $cachedir/rootfs-$arch. clearing ..."
+			rm -fR $cachedir/rootfs-$arch
         fi
         
         # check the mini debian was not already downloaded
-        message "Checking cache download in $CACHE/$SUITE/rootfs-$arch ... "
-        if [ ! -e "$CACHE/$SUITE/rootfs-$arch" ]; then
+        message "Checking cache download in $cachedir/rootfs-$arch ... "
+        if [ ! -e "$cachedir/rootfs-$arch" ]; then
             download_debian
             if [ $? -ne 0 ]; then
                 error "Failed to download 'Debian Base'"

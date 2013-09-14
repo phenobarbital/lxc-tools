@@ -593,8 +593,6 @@ main()
     ROOTFS="$CONFIG/rootfs"
     CONFIGFILE="$CONFIG/config"
     
-    debug $CONFIG
-    
 	# network configuration
 	get_network_info
 	
