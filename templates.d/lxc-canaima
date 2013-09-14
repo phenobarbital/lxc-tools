@@ -168,9 +168,9 @@ configure_canaima()
 		error "Failed to Configure 'Canaima Base'"
 		return 1
     fi		
-	# running basic debian hooks
-	CANAIMA="$TEMPLATEDIR/canaima.d"
-	for f in $(find $CANAIMA/* -maxdepth 1 -type f | sort --numeric-sort); do
+	# running basic canaima hooks
+	hooks="$TEMPLATEDIR/canaima.d"
+	for f in $(find $hooks/* -maxdepth 1 -executable -type f ! -iname "*.md" ! -iname ".*" | sort --numeric-sort); do
 		. $f
 	done
 }

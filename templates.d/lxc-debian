@@ -161,7 +161,7 @@ configure_debian()
     fi	
 	# running basic debian hooks
 	hooks="$TEMPLATEDIR/debian.d"
-	for f in $(find $hooks/* -maxdepth 1 -type f \( -iname ! "*.md" ! -iname ".*" \) | sort --numeric-sort); do
+	for f in $(find $hooks/* -maxdepth 1 -executable -type f ! -iname "*.md" ! -iname ".*" | sort --numeric-sort); do
 		. $f
 	done
 }

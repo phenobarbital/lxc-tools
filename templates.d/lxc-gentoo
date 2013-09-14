@@ -368,8 +368,8 @@ configure_gentoo()
 	# configure network
 	gentoo_network
 	# running basic gentoo hooks
-	HOOKS="$TEMPLATEDIR/gentoo.d"
-	for f in $(find $HOOKS/* -maxdepth 1 -type f | sort --numeric-sort); do
+	hooks="$TEMPLATEDIR/gentoo.d"
+	for f in $(find $hooks/* -maxdepth 1 -executable -type f ! -iname "*.md" ! -iname ".*" | sort --numeric-sort); do
 		. $f
 	done	
 	return 0

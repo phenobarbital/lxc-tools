@@ -328,7 +328,7 @@ configure_centos()
 	# running basic centos hooks
 	CENTOS="$TEMPLATEDIR/centos.d"
 	hooks="$TEMPLATEDIR/centos.d"
-	for f in $(find $hooks/* -maxdepth 1 -type f \( -iname ! "*.md" ! -iname ".*" \) | sort --numeric-sort); do
+	for f in $(find $hooks/* -maxdepth 1 -executable -type f ! -iname "*.md" ! -iname ".*" | sort --numeric-sort); do
 		. $f
 	done
 }
