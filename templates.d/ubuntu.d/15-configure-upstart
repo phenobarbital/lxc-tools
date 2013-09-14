@@ -4,6 +4,8 @@
 # configure upstart
 #
 
+install_package console-common,console-data
+
 cat <<EOF > $ROOTFS/lib/init/fstab
 #
 # These are the filesystems that are always mounted on boot, you can
