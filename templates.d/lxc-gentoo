@@ -212,6 +212,7 @@ gentoo_inittab() {
 	echo "# Lxc main console" >> ${ROOTFS}/etc/inittab
 	# echo "1:12345:respawn:/sbin/agetty -a root 38400 console linux" >> ${ROOTFS}/${INITTAB}
 	echo "1:12345:respawn:/sbin/agetty 115200 console linux" >> ${ROOTFS}/etc/inittab
+	echo "pf:12345:powerwait:/sbin/halt" >> ${ROOTFS}/etc/inittab
 	# we also blank out /etc/issue here in order to prevent delays spawning login
 	# caused by attempts to determine domainname on disconnected containers
 	rm ${ROOTFS}/etc/issue && touch ${ROOTFS}/etc/issue
