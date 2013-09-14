@@ -252,14 +252,19 @@ create_btrfs_volume() {
 			error "$DIR is not a BTRFS volume, use DIR to define a BTRFS mount point"
 			exit 1
 		fi
+		# test if sub-volume not exists
+		id=btrfs subvolume list $DIR | grep $NAME | grep ID | awk '{print $2}'
+		if [ $id -ne 0 ]; then
+			error "error: sub-volume $NAME already exists in $DIR with ID $id, aborted" >&2
+			exit 1
+		fi
 		debug " - creating BTRFS sub-volume $NAME in $DIR"
 		# crear un sub-volumen
-		btrfs subvolume create $DIR/$NAME
+		btrfs subvolume create $DIR/$NAME > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
 			error "error creating btrfs sub-volume in volume $DIR, aborted" >&2
 			exit 1
 		fi
-		debug "create a sub-volume via btrfs"
 	fi
 }
 
@@ -603,7 +608,7 @@ main()
 		create_btrfs_volume
 		make_rootfs
 		touch_config
-		echo "btrfs" && exit 0;;
+		;;
 	"dir")
 		make_rootfs
 		# create config-file
@@ -624,7 +629,6 @@ main()
 	# create config file
     create_lxc_config
     #
-    exit 0
     ## creating vm from template
     get_template
     set_suite_repository
