@@ -9,7 +9,7 @@ LXC-tools TODO list
 * Add logging functionality for every run (container.0, container.1)
 * Generate a random password for more "automatically" creation of container
 * LVM creation functionality (ready)
-* BTRFS creation functionality
+* BTRFS creation functionality (ready)
 * role for Debian hardening (install psad,shorewall,portsentry,fail2ban)
 * various functional roles (ex: web server)
 * crear un LXC a partir de una openvz template

@@ -181,6 +181,7 @@ canaima_devices()
 	if [ ! -d "$DEV" ]; then
 		mkdir -p $DEV
 	fi
+	rm -f $DEV/tty
 	mknod -m 666 $DEV/tty c 5 0
     for tty in $(seq 0 4); do
 	if [ ! -e $DEV/tty$tty ]; then
@@ -243,9 +244,6 @@ EOF
 # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab
 /dev/root             /       rootfs defaults        0 0
-proc            /proc         proc   nodev,noexec,nosuid 0 0
-sysfs           /sys          sysfs  defaults  0 0
-none            /dev/pts      devpts defaults 0 0
 EOF
 }
 
