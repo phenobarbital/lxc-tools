@@ -43,7 +43,7 @@ download_ubuntu()
     fi
     
     # extra packages for Ubuntu minimal
-    extra_packages=dialog,apt,apt-utils,iproute,inetutils-ping,vim,isc-dhcp-client,isc-dhcp-common,ssh,lsb-release,gnupg,netbase,ubuntu-minimal,ubuntu-keyring
+    extra_packages=dialog,apt,apt-utils,iproute,vim,isc-dhcp-client,isc-dhcp-common,ssh,lsb-release,gnupg,netbase,ubuntu-minimal,ubuntu-keyring
     
     message "Downloading Ubuntu minimal ..."
     debootstrap --verbose --components=main,universe --arch=$arch --include $extra_packages \
@@ -129,9 +129,7 @@ ubuntu_cleanup()
 	chroot $ROOTFS /usr/bin/apt-get -y autoremove
 	chroot $ROOTFS /usr/bin/apt-get -y clean
 	#  Remove disable-daemons script (if present)
-	if [ -x "$ROOTFS/usr/sbin/policy-rc.d" ]; then
-		rm -f "$ROOTFS/usr/sbin/policy-rc.d"
-	fi
+	rm -f "$ROOTFS//usr/sbin/policy-rc.d"
 	# Unmount systems apt cache
     umount "$ROOTFS/var/cache/apt/archives"
     rm -f "$ROOTFS/etc/dpkg/dpkg.cfg.d/lxc"

@@ -9,8 +9,8 @@
 if [ $SUITE = "lucid" -o $SUITE = "maverick" ]; then
     chroot $ROOTFS add-apt-repository ppa:ubuntu-virt/ppa
     chroot $ROOTFS apt-get update
+    install_package lxcguest
 fi
-install_package lxcguest
 
 ## install utilities
 install_package screen bash-completion
