@@ -102,12 +102,13 @@ get_network_info() {
 	fi
 	
     # get mac-address
+    # MACADDR=`openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//'`
 	if [ -f /usr/lib/lxc-tools/macgen.py ]; then
+	
 		MACADDR=`python /usr/lib/lxc-tools/macgen.py`
 	else
 		MACADDR=`python ./lib/macgen.py`
 	fi
-	# MACADDR=`openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//'`
 	# get network type
 	case "$NET_TYPE" in
 	'veth')

@@ -104,7 +104,7 @@ execute_roles()
 
 function create_lxc_config() {
 	if [ -z "$SECURE" ]; then
-		CAPABILITIES='mac_admin mac_override sys_time sys_nice'
+		CAPABILITIES='sys_admin sys_module sys_time sys_nice mac_admin mac_override'
 	else
 		CAPABILITIES='sys_admin audit_control audit_write fsetid ipc_lock ipc_owner lease linux_immutable mac_admin mac_override mknod setfcap setpcap sys_module sys_nice sys_pacct sys_ptrace sys_rawio sys_tty_config sys_time'
 	fi
@@ -127,7 +127,7 @@ lxc.cap.drop                            = $CAPABILITIES
 
 ## Devices
 # Allow all devices
-lxc.cgroup.devices.allow               = a
+#lxc.cgroup.devices.allow               = a
 # Deny all devices
 lxc.cgroup.devices.deny                 = a
 # Allow to mknod all devices (but not using them)
@@ -652,6 +652,8 @@ main()
 	cleanup_container
 	message "Creation of Container finished."
 	umount_lvm
+	# create container
+	lxc-create -n $NAME -f $CONFIGFILE
     install_summary
     info "You can run your container with the 'lxc-start -n $NAME -d'"    
 }
