@@ -241,6 +241,18 @@ umount_lvm()
 create_btrfs_volume() {
 	#TODO
 	if [ "$BACKEND_METHOD" = 'btrfs' ]; then
+		# btrfs is installed?
+		BTRFS=`which btrfs`
+		if [ ! -f "$BTRFS" ]; then
+			error "'btrfs' command is missing, run 'apt-get install btrfs-tools'"
+			exit 1
+		fi
+		# is directory a BTRFS volume?
+		btrfs filesystem df $DIR > /dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			error "$DIR is not a BTRFS volume, use DIR for define a BTRFS mount point"
+			exit 1
+		fi
 		get_size
 		debug "create a sub-volume via btrfs"
 	fi
@@ -605,7 +617,8 @@ main()
 
 	# create config file
     create_lxc_config
-
+    #
+    exit 0
     ## creating vm from template
     get_template
     set_suite_repository

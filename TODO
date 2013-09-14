@@ -18,3 +18,17 @@ LXC-tools TODO list
 * Crear rol para un application-container lxct-app (ej: bind-chroot)
 * Working hooks.d directory
 * Rename scripts in lib/ directory (for using lxct- prefix)
+* Add debian/ folder for .deb version
+* Split common functionality in different versions (https://github.com/phbaer/lxc-tools)
+
+converting openvz template in a lxc container
+
+tar xfz /centos-lxc-root.tgz --numeric-owner
+
+
+# chkconfig --list|grep '3:on'
+# chkconfig httpd off
+# chkconfig saslauthd off
+# rm /etc/mtab
+# touch /etc/mtab
+
