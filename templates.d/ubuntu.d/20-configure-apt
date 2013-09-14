@@ -1,0 +1,37 @@
+#!/bin/bash
+# 20-configure-apt
+#
+# This script configure apt
+#
+
+#
+# Setup the apt for new installations of Ubuntu Linux.
+#
+
+#TODO: configure sources.list
+
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/10-$DIST
+Acquire::PDiffs "false";
+// Acquire::Language "none";
+APT::Clean-Installed "true";
+APT::Get:AutomaticRemove "true";
+APT::Get::HideAutoRemove "false";
+APT::Get:Show-Upgraded "true";
+APT::Install-Recommends "false";
+EOF
+
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/80-update
+Acquire::Check-Valid-Until "false";
+EOF
+
+cat <<EOF > $ROOTFS/etc/apt/apt.conf.d/90-recommends
+APT::Install-Recommends "false";
+EOF
+
+#
+#  Now that the sources have been setup make sure the system is up to date.
+#
+chroot $ROOTFS /usr/bin/apt-get update
+chroot $ROOTFS /usr/bin/apt-get upgrade -y
+
+install_package python-software-properties

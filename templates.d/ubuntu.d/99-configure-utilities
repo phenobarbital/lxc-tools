@@ -1,0 +1,28 @@
+#!/bin/bash
+# 99-configure-utilities
+#
+#  This script configure vim, bashrc, profile and other utilities in the
+# chroot() installation.
+#
+
+# for lucid and maverick, add the ubuntu-virt ppa and install lxcguest
+if [ $SUITE = "lucid" -o $SUITE = "maverick" ]; then
+    chroot $ROOTFS add-apt-repository ppa:ubuntu-virt/ppa
+    chroot $ROOTFS apt-get update
+fi
+install_package lxcguest
+
+## install utilities
+install_package screen bash-completion
+
+## configure bashrc
+sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' $ROOTFS/etc/skel/.bashrc
+
+# enable colors in bash
+sed -i "s/^# export LS_OPTIONS='--color=auto'/export LS_OPTIONS='--color=auto'/" $ROOTFS/root/.bashrc
+sed -i 's/^# eval "`dircolors`"/eval "`dircolors`"/' $ROOTFS/root/.bashrc
+sed -i "s/^# alias ls='ls $LS_OPTIONS'/alias ls='ls $LS_OPTIONS'/" $ROOTFS/root/.bashrc
+sed -i "s/^# alias ll='ls $LS_OPTIONS -l'/alias ll='ls $LS_OPTIONS -l'/" $ROOTFS/root/.bashrc
+
+## enable bash-completion
+sed -i '/^#if ! shopt -oq posix; then$/,+6s/# / /' $ROOTFS/etc/bash.bashrc

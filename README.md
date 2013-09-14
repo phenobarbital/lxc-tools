@@ -29,8 +29,8 @@ Coming soon:
 Requirements
 
 - lxc
-- rsync
 - debootstrap (debian, ubuntu, canaima containers)
+- rsync
 - lsb-release
 - curl
 - wget

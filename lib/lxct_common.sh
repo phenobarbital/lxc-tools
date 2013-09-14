@@ -249,12 +249,13 @@ install_package()
 	fi
 	case "$DIST" in
 		"debian"|"Debian"|"DEBIAN")
+		"ubuntu"|"Ubuntu"|"UBUNTU")
 				message "installing Debian package $@"
 				#
 				# Install the packages
 				#
 				DEBIAN_FRONTEND=noninteractive chroot $ROOTFS /usr/bin/apt-get --option Dpkg::Options::="--force-overwrite" --option Dpkg::Options::="--force-confold" --yes --force-yes install "$@"
-				;;
+				;;			
 		"canaima"|"Canaima"|"CANAIMA")
 				message "installing Canaima package $@"
 				#
@@ -285,6 +286,7 @@ remove_package()
 	fi
 	case "$DIST" in
 		"debian"|"Debian"|"DEBIAN")
+		"ubuntu"|"Ubuntu"|"UBUNTU")
 				message "remove Debian package $@"
 				#
 				# Install the packages

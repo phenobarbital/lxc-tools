@@ -1,0 +1,36 @@
+#!/bin/bash
+# 05-disable-services
+#
+# This script disable some services on container
+#
+
+# remove pointless services in a container
+chroot $ROOTFS /usr/sbin/update-rc.d -f ondemand remove
+
+chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls u*.conf); do mv $f $f.orig; done'
+chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls tty[2-9].conf); do mv $f $f.orig; done'
+chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls plymouth*.conf); do mv $f $f.orig; done'
+chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls hwclock*.conf); do mv $f $f.orig; done'
+chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls module*.conf); do mv $f $f.orig; done'
+
+# if this isn't lucid, then we need to twiddle the network upstart bits :(
+if [ $SUITE != "lucid" ]; then
+	sed -i 's/^.*emission handled.*$/echo Emitting lo/' $ROOTFS/etc/network/if-up.d/upstart
+fi
+
+cat <<EOF > $ROOTFS/etc/init/console.conf
+# console - getty
+#
+# This service maintains a console on tty1 from the point the system is
+# started until it is shut down again.
+
+start on stopped rc RUNLEVEL=[2345]
+stop on runlevel [!2345]
+
+respawn
+exec /sbin/getty -8 38400 /dev/console
+EOF
+
+cat <<EOF > $ROOTFS/lib/init/fstab
+# /lib/init/fstab: cleared out for bare-bones lxc
+EOF

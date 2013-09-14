@@ -1,7 +1,7 @@
 LXC-tools TODO list
 -------------------
 
-* Ubuntu, ArchLinux and Busybox templates
+* Ubuntu, ArchLinux, Progress and Busybox templates
 * Check if container exists (name, directory, etc)
 * Check directory name (check_name) using a regex
 * Save LXC-container as a template (tar.gz)
@@ -20,7 +20,16 @@ LXC-tools TODO list
 * Rename scripts in lib/ directory (for using lxct- prefix)
 * Add debian/ folder for .deb version
 * Split common functionality in different versions (https://github.com/phbaer/lxc-tools)
+* Use TRAP (EXIT SIGHUP SIGINT SIGTERM) for cleanup some accidental failures.
+* using qemu-debootstrap
+    if [ -n "$(which qemu-debootstrap)" ]; then
+        qemu-debootstrap --verbose --components=main,universe --arch=$arch --include=$packages $release $cache/partial-$arch $MIRROR
+  for ARM-emulated containers.
 
+    elif [ "$arch" = "armv7l" ]; then
+        arch="armhf"
+    fi
+    
 converting openvz template in a lxc container
 
 tar xfz /centos-lxc-root.tgz --numeric-owner
@@ -31,4 +40,5 @@ tar xfz /centos-lxc-root.tgz --numeric-owner
 # chkconfig saslauthd off
 # rm /etc/mtab
 # touch /etc/mtab
+
 

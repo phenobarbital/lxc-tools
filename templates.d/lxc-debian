@@ -4,13 +4,14 @@
 #
 #  Build container from debian rules
 ##
-# 
+#
 # debootstrap debian install
 # Version: 0.5
-# based on:
+# based on: https://github.com/simonvanderveldt/lxc-debian-wheezy-template/
 # Daniel Lezcano <daniel.lezcano@free.fr>
+# Simon Van Der Veldt <http://simonvanderveldt.nl/>
 # Authors:
-# Jesus Lara <jesuslarag@phenobarbital.info>
+# Jesus Lara <jesuslara@phenobarbital.info>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -36,13 +37,8 @@ download_debian()
        	error "Failed to create '$CACHE/$SUITE/partial-$arch' directory"
        	return 1
     fi
-    # download a mini debian into a cache
-    info "este $SUITE"
-    info "este $DIST"
-    
+    # download a mini debian into a cache    
     message "Downloading Debian minimal ..."
-    cmd="debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES $SUITE $CACHE/$SUITE/partial-$arch $MIRROR"
-    debug $cmd
     debootstrap --verbose --variant=$VARIANT --arch=$arch --include $EXTRA_PACKAGES \
         $SUITE $CACHE/$SUITE/partial-$arch $MIRROR
     RESULT=$?
@@ -272,6 +268,7 @@ create_container()
 	# create cache and install Debian
 	install_debian
     if [ $? -ne 0 ]; then
+		trap cleanup_container EXIT SIGHUP SIGINT SIGTERM
 		error "Failed to Download and install Debian Base"
 		return 1
     fi
@@ -282,7 +279,7 @@ create_container()
 		error "Failed to Configure Debian Base"
 		return 1
     fi		
-	info "Debian LXC Container created"
+	info "Debian $SUITE LXC Container created"
 	return 0
 }
 

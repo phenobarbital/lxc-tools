@@ -13,7 +13,7 @@
 # Ramez Hanna <rhanna@informatiq.org>
 #
 # Authors:
-# Jesus Lara <jesuslarag@phenobarbital.info>
+# Jesus Lara <jesuslara@phenobarbital.info>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -301,12 +301,11 @@ l4:4:wait:/etc/init.d/rc 4
 l5:5:wait:/etc/init.d/rc 5
 l6:6:wait:/etc/init.d/rc 6
 # Normally not reached, but fallthrough in case of emergency.
+p6::ctrlaltdel:/sbin/init 6
+p0::powerfail:/sbin/init 0
+pf:12345:powerwait:/sbin/halt
 z6:6:respawn:/sbin/sulogin
 1:2345:respawn:/sbin/getty 38400 console
-#c1:12345:respawn:/sbin/getty 38400 tty1 linux
-#c2:12345:respawn:/sbin/getty 38400 tty2 linux
-#c3:12345:respawn:/sbin/getty 38400 tty3 linux
-#c4:12345:respawn:/sbin/getty 38400 tty4 linux
 EOF
 # configure a minimal fstab for container
 cat <<EOF > $ROOTFS/etc/fstab

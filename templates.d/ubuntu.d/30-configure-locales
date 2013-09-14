@@ -1,0 +1,28 @@
+#!/bin/bash
+# 30-configure-locales
+#
+# install and configure locales
+#
+
+#
+#  Install locales
+#
+install_package locales
+install_package util-linux-locales
+
+# discover host locale
+LANG=$(locale | grep "LANG=" | cut -d "=" -f2)
+
+#
+# define locales
+#
+chroot $ROOTFS /usr/sbin/update-locale LANG=C
+
+#
+# Default to the same locale as the host.
+#
+if [ -e /etc/locale.gen ]; then
+   cp /etc/locale.gen $ROOTFS/etc
+fi
+chroot $ROOTFS /usr/sbin/locale-gen
+chroot $ROOTFS update-locale LANG=$LANG
