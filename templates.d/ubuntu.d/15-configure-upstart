@@ -29,7 +29,7 @@ none            /lib/init/rw              tmpfs           mode=0755,nosuid,optio
 EOF
 
 
-sed -i 's/start on filesystem and net-device-up IFACE=lo/start on filesystem #and net-device-up IFACE=lo/' $ROOTFS/etc/init/rc-sysinit.conf
+# sed -i 's/start on filesystem and net-device-up IFACE=lo/start on filesystem #and net-device-up IFACE=lo/' $ROOTFS/etc/init/rc-sysinit.conf
 
 cat <<EOF > $ROOTFS/etc/init/lxc.conf
 # LXC – Fix init sequence to have LXC containers boot with upstart
@@ -40,11 +40,6 @@ start on startup
 
 task
 pre-start script
-mount -t proc proc /proc
-mount -t devpts devpts /dev/pts
-mount -t sysfs sys /sys
-mount -t tmpfs varrun /var/run
-mount -t tmpfs varlock /var/lock
 mkdir -p /var/run/network
 touch /var/run/utmp
 chmod 664 /var/run/utmp

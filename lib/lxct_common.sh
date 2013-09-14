@@ -135,13 +135,13 @@ get_lxcpath()
 # get hostname
 function get_hostname() {
         if [ -z "$NAME" ]; then
-                echo -n "name of container? [ex: `hostname --short`] "
+			randomhost=`tr -dc 'a-z' < /dev/urandom | fold -w 64 | head -c8`
+                echo -n "name of container? [ex: $randomhost ] "
                 read _HOSTNAME_
                 if [ ! -z "$_HOSTNAME_" ]; then
                     NAME=$_HOSTNAME_
                 elif [ -z "$NAME" ]; then
-                    error "error : missing container name, use -n|--name option"
-                    exit 1
+                    NAME=$randomhost
                 fi
         fi
         HOSTNAME=$NAME.$DOMAIN
@@ -333,7 +333,8 @@ show_summary()
 
 SUMMARY=$(cat << _MSG
  ---------- [ Summary options for $NAME ] ---------------------
- 
+  
+  Name : .......................... $NAME
   Config Dir :	................... $CONFIG
   RootFS : ........................ $ROOTFS
   Distribution : .................. $DIST

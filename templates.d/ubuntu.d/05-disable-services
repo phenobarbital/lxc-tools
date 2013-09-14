@@ -17,6 +17,7 @@ chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls hwclock*.conf); do mv $
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls module*.conf); do mv $f $f.orig; done'
 
 # chroot $ROOTFS rm -f mountall* control-alt-delete.conf hwclock* network-interface.conf procps.conf upstart-udev-bridge.conf
+# rm -f console* control* hwclock* module* mount* network-interface* plymouth* procps* tty{4,5,6}.conf udev* upstart*
 
 # if this isn't lucid, then we need to twiddle the network upstart bits :(
 if [ $SUITE != "lucid" ]; then

@@ -202,12 +202,18 @@ ubuntu_devices()
     mknod -m 666 $DEV/urandom c 1 9
     rm -f $DEV/console
     mknod -m 600 $DEV/console c 5 1
+    mknod -m 644 $DEV/xconsole p
     rm -f $DEV/full
     mknod -m 666 $DEV/full c 1 7
     rm -fR $DEV/shm
     mkdir -m 1777 $DEV/shm
     rm -fR $DEV/pts
     mkdir -m 755 $DEV/pts
+	mknod -m 600 $DEV/initctl p
+	mknod -m 666 $DEV/ptmx c 5 2
+	# For OpenVPN tun/tap support:
+	mkdir -m 755 $DEV/net
+	mknod -m 666 $DEV/net/tun c 10 200    
     # Mount pseudo-filesystems
     mount -o bind /dev/pts "$ROOTFS/dev/pts"
     mount -o bind /proc "$ROOTFS/proc"
