@@ -16,6 +16,8 @@ chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls plymouth*.conf); do mv 
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls hwclock*.conf); do mv $f $f.orig; done'
 chroot $ROOTFS /bin/bash -c 'cd /etc/init; for f in $(ls module*.conf); do mv $f $f.orig; done'
 
+# chroot $ROOTFS rm -f mountall* control-alt-delete.conf hwclock* network-interface.conf procps.conf upstart-udev-bridge.conf
+
 # if this isn't lucid, then we need to twiddle the network upstart bits :(
 if [ $SUITE != "lucid" ]; then
 	sed -i 's/^.*emission handled.*$/echo Emitting lo/' $ROOTFS/etc/network/if-up.d/upstart
