@@ -160,8 +160,8 @@ configure_debian()
 		return 1
     fi	
 	# running basic debian hooks
-	DEBIAN="$TEMPLATEDIR/debian.d"
-	for f in $(find $DEBIAN/* -maxdepth 1 -type f | sort --numeric-sort); do
+	hooks="$TEMPLATEDIR/debian.d"
+	for f in $(find $hooks/* -maxdepth 1 -type f \( -iname ! "*.md" ! -iname ".*" \) | sort --numeric-sort); do
 		. $f
 	done
 }

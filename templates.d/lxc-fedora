@@ -391,8 +391,8 @@ configure_fedora()
 	# inittab
 	fedora_inittab
 	# running basic fedora hooks
-	FEDORA="$TEMPLATEDIR/fedora.d"
-	for f in $(find $FEDORA/* -maxdepth 1 -type f | sort --numeric-sort); do
+	hooks="$TEMPLATEDIR/fedora.d"
+	for f in $(find $hooks/* -maxdepth 1 -type f \( -iname ! "*.md" ! -iname ".*" \) | sort --numeric-sort); do
 		. $f
 	done
 }

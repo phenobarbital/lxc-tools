@@ -601,9 +601,11 @@ main()
 	show_summary
 
 	# TODO, ¿pedir confirmación para proceder luego del sumario?
-	read -p "Continue (y/n)?" WORK
-	if [ "$WORK" != "y" ]; then
-		exit 0
+	if [ "$VERBOSE" == 'true' ]; then
+		read -p "Continue (y/n)?" WORK
+		if [ "$WORK" != "y" ]; then
+			exit 0
+		fi
 	fi
 	
 	case "$BACKEND_METHOD" in
