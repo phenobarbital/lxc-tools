@@ -43,7 +43,7 @@ download_ubuntu()
     fi
     
     # extra packages for Ubuntu minimal
-    extra_packages=dialog,apt,apt-utils,iproute,vim,isc-dhcp-client,isc-dhcp-common,plymouth,console-setup,console-common,console-data,ssh,lsb-release,gnupg,netbase,ubuntu-minimal,ubuntu-keyring
+    extra_packages=dialog,apt,apt-utils,iproute,vim,isc-dhcp-client,isc-dhcp-common,plymouth,plymouth-theme-ubuntu-text,console-setup,console-common,console-data,ssh,lsb-release,gnupg,netbase,ubuntu-minimal,ubuntu-keyring
     
     message "Downloading Ubuntu minimal ..."
     debootstrap --verbose --components=main,universe --arch=$arch --include $extra_packages \
@@ -227,7 +227,7 @@ ubuntu_devices()
 }
 
 ubuntu_inittab() {
-	# create a minimal inittab
+# create a minimal inittab
 cat <<EOF > $ROOTFS/etc/inittab
 # /etc/inittab: init(8) configuration.
 # The default runlevel.

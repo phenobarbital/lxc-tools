@@ -4,8 +4,6 @@
 # configure upstart
 #
 
-install_package console-common,console-data
-
 cat <<EOF > $ROOTFS/lib/init/fstab
 #
 # These are the filesystems that are always mounted on boot, you can
@@ -36,19 +34,18 @@ EOF
 cat <<EOF > $ROOTFS/etc/init/lxc.conf
 # LXC – Fix init sequence to have LXC containers boot with upstart
 
-# description “Fix LXC container”
+# description "Fix LXC container - Lucid"
 
 start on startup
 
 task
 pre-start script
+
 mkdir -p /var/run/network
 touch /var/run/utmp
 chmod 664 /var/run/utmp
 chown root.utmp /var/run/utmp
-if [ "$(find /etc/network/ -name upstart -type f)" ]; then
-chmod -x /etc/network/*/upstart || true
-fi
+find /etc/network -name upstart -type f | xargs chmod -x 
 end script
 
 script
